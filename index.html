@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CS:Lite — Тактический шутер</title>
+    <title>CS:Lite 2.0 - Псевдо-3D Шутер</title>
     <style>
         * {
             margin: 0;
@@ -13,19 +13,19 @@
         }
 
         body {
-            font-family: 'Courier New', monospace;
             background: linear-gradient(135deg, #0a0f1a 0%, #1a1f2e 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            font-family: 'Courier New', monospace;
         }
 
         .game-container {
             background: rgba(0, 0, 0, 0.85);
             border-radius: 20px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
             border: 1px solid #ffd700;
         }
@@ -36,111 +36,55 @@
             align-items: center;
             background: rgba(0, 0, 0, 0.8);
             border-radius: 10px;
-            padding: 12px 20px;
+            padding: 10px 20px;
             margin-bottom: 15px;
-            font-weight: bold;
             flex-wrap: wrap;
             gap: 10px;
         }
 
         .health-bar {
-            width: 220px;
-            height: 22px;
+            width: 250px;
+            height: 20px;
             background: #2a2a2a;
-            border-radius: 11px;
+            border-radius: 10px;
             overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
 
         .health-fill {
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, #00cc00, #ffff00, #ff3300);
-            border-radius: 11px;
+            background: linear-gradient(90deg, #00cc00, #ffcc00, #ff3300);
             transition: width 0.3s;
         }
 
-        .health-bar span {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 11px;
-            color: white;
-            line-height: 22px;
-            text-shadow: 1px 1px 0 #000;
-        }
-
-        .ammo, .money, .round, .score {
+        .ammo, .money, .round, .score, .weapon-name {
             background: #1a1a2a;
-            padding: 6px 16px;
+            padding: 5px 15px;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            font-family: monospace;
             border: 1px solid #ffd700;
         }
 
-        .weapon-selector {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
-            border: 2px solid #ffd700;
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            z-index: 100;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
-        }
-
-        .weapon-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #ffd700;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .weapon-list {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .weapon-btn {
+        .shop-btn {
             background: linear-gradient(135deg, #2c3e50, #1a252f);
             border: 1px solid #ffd700;
-            color: white;
-            padding: 12px 25px;
-            font-size: 16px;
-            font-weight: bold;
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 8px;
             cursor: pointer;
-            border-radius: 10px;
-            transition: 0.2s;
-            font-family: monospace;
+            font-weight: bold;
         }
 
-        .weapon-btn:hover {
-            transform: scale(1.05);
+        .shop-btn:hover {
             background: linear-gradient(135deg, #ffd700, #ffaa00);
             color: #000;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .canvas-container {
-            position: relative;
-            display: inline-block;
         }
 
         canvas {
             border-radius: 12px;
             cursor: crosshair;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            background: #1a1a2a;
             display: block;
             margin: 0 auto;
         }
@@ -148,12 +92,11 @@
         .controls-hint {
             text-align: center;
             margin-top: 12px;
-            font-size: 12px;
+            font-size: 11px;
             color: #ffd700;
-            font-weight: bold;
         }
 
-        .round-info {
+        .shop-panel {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -161,39 +104,53 @@
             background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
             border: 2px solid #ffd700;
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
             z-index: 100;
+            width: 400px;
         }
 
-        .round-title {
-            font-size: 32px;
+        .shop-title {
+            font-size: 24px;
             font-weight: bold;
             color: #ffd700;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        .round-desc {
-            font-size: 18px;
-            margin-bottom: 25px;
-            color: #ccc;
+        .shop-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .start-btn, .restart-btn {
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
-            border: none;
-            padding: 12px 30px;
-            font-size: 18px;
-            font-weight: bold;
+        .shop-item {
+            background: #2a2a3a;
+            border: 1px solid #ffd700;
             border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
             cursor: pointer;
             transition: 0.2s;
-            font-family: monospace;
         }
 
-        .start-btn:hover, .restart-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        .shop-item:hover {
+            background: #3a3a4a;
+            transform: scale(1.02);
+        }
+
+        .shop-item-name { font-weight: bold; color: #ffd700; }
+        .shop-item-price { color: #00ff00; }
+        .shop-item-desc { font-size: 11px; color: #aaa; }
+
+        .close-shop {
+            background: #ff4444;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         .game-over {
@@ -209,61 +166,61 @@
             z-index: 100;
         }
 
-        .game-over-title {
-            font-size: 36px;
+        .game-over-title { font-size: 36px; font-weight: bold; margin-bottom: 20px; }
+        .game-over-title.win { color: #00ff00; }
+        .game-over-title.lose { color: #ff4444; }
+        .restart-btn {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            cursor: pointer;
         }
 
-        .game-over-title.win {
-            color: #00ff00;
-        }
-
-        .game-over-title.lose {
-            color: #ff4444;
-        }
-
-        @media (max-width: 1300px) {
-            canvas {
-                width: 100%;
-                height: auto;
-            }
-            .weapon-list {
-                flex-direction: column;
-            }
+        @media (max-width: 1000px) {
+            canvas { width: 100%; height: auto; }
+            .shop-panel { width: 90%; }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
     <div class="hud">
-        <div class="health-bar">
-            <div class="health-fill" id="healthFill"></div>
-            <span id="healthText">100 HP</span>
-        </div>
-        <div class="ammo"><span id="ammoText">30/90</span></div>
+        <div class="health-bar"><div class="health-fill" id="healthFill"></div></div>
+        <div class="weapon-name" id="weaponName">P250</div>
+        <div class="ammo"><span id="ammoText">13/52</span></div>
         <div class="money">💰 <span id="moneyText">800</span>$</div>
         <div class="round">Раунд <span id="roundText">1</span>/5</div>
         <div class="score">🏆 <span id="scoreText">0</span> : <span id="enemyScoreText">0</span></div>
+        <button class="shop-btn" id="shopBtn">🛒 МАГАЗИН</button>
     </div>
 
-    <div class="weapon-selector" id="weaponSelector">
-        <div class="weapon-title">ВЫБЕРИТЕ ОРУЖИЕ</div>
-        <div class="weapon-list">
-            <button class="weapon-btn" data-weapon="pistol">🔫 P250 (300$)</button>
-            <button class="weapon-btn" data-weapon="rifle">🔫 AK-47 (2700$)</button>
-            <button class="weapon-btn" data-weapon="sniper">🔫 AWP (4750$)</button>
-            <button class="weapon-btn" data-weapon="shotgun">🔫 XM1014 (2000$)</button>
+    <canvas id="gameCanvas" width="900" height="600"></canvas>
+    <div class="controls-hint">🎮 W/A/S/D — движение | 🖱️ Мышь — прицел | 🔫 ЛКМ — выстрел | 🔄 R — перезарядка</div>
+
+    <div class="shop-panel" id="shopPanel" style="display: none;">
+        <div class="shop-title">🛒 ОРУЖЕЙНЫЙ МАГАЗИН</div>
+        <div class="shop-items">
+            <div class="shop-item" data-weapon="pistol">
+                <div><span class="shop-item-name">🔫 P250</span><br><span class="shop-item-desc">Урон: 25 | Магазин: 13</span></div>
+                <div class="shop-item-price">300$</div>
+            </div>
+            <div class="shop-item" data-weapon="rifle">
+                <div><span class="shop-item-name">🔫 AK-47</span><br><span class="shop-item-desc">Урон: 40 | Магазин: 30</span></div>
+                <div class="shop-item-price">2700$</div>
+            </div>
+            <div class="shop-item" data-weapon="sniper">
+                <div><span class="shop-item-name">🔫 AWP</span><br><span class="shop-item-desc">Урон: 100 | Магазин: 10</span></div>
+                <div class="shop-item-price">4750$</div>
+            </div>
+            <div class="shop-item" data-weapon="shotgun">
+                <div><span class="shop-item-name">🔫 XM1014</span><br><span class="shop-item-desc">Урон: 70 | Магазин: 7</span></div>
+                <div class="shop-item-price">2000$</div>
+            </div>
         </div>
-    </div>
-
-    <canvas id="gameCanvas" width="1100" height="550"></canvas>
-    <div class="controls-hint">🖱️ Наведите прицел и кликните, чтобы выстрелить</div>
-
-    <div class="round-info" id="roundInfo" style="display: none;">
-        <div class="round-title" id="roundTitle">РАУНД НАЧАЛСЯ!</div>
-        <div class="round-desc" id="roundDesc"></div>
-        <button class="start-btn" id="startRoundBtn">НАЧАТЬ РАУНД</button>
+        <button class="close-shop" id="closeShopBtn">ЗАКРЫТЬ</button>
     </div>
 
     <div class="game-over" id="gameOver" style="display: none;">
@@ -276,302 +233,381 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
+    // Оружие
     const weapons = {
-        pistol: { name: 'P250', damage: 25, fireRate: 400, price: 300, magSize: 13, maxAmmo: 52 },
-        rifle: { name: 'AK-47', damage: 40, fireRate: 600, price: 2700, magSize: 30, maxAmmo: 90 },
-        sniper: { name: 'AWP', damage: 100, fireRate: 48, price: 4750, magSize: 10, maxAmmo: 30 },
-        shotgun: { name: 'XM1014', damage: 70, fireRate: 120, price: 2000, magSize: 7, maxAmmo: 28 }
+        pistol: { name: 'P250', damage: 25, fireRate: 400, price: 300, magSize: 13, maxAmmo: 52, color: '#8B6914' },
+        rifle: { name: 'AK-47', damage: 40, fireRate: 600, price: 2700, magSize: 30, maxAmmo: 90, color: '#2a2a2a' },
+        sniper: { name: 'AWP', damage: 100, fireRate: 48, price: 4750, magSize: 10, maxAmmo: 30, color: '#1a3a4a' },
+        shotgun: { name: 'XM1014', damage: 70, fireRate: 120, price: 2000, magSize: 7, maxAmmo: 28, color: '#4a2a1a' }
     };
 
-    let gameState = {
-        health: 100, money: 800, currentWeapon: null, ammo: 30, reserveAmmo: 90,
-        score: 0, enemyScore: 0, round: 1, alive: true, gameActive: false, enemies: []
-    };
+    let currentWeapon = 'pistol';
+    let ammo = weapons.pistol.magSize;
+    let reserveAmmo = weapons.pistol.maxAmmo;
+    let money = 800;
+    let health = 100;
+    let score = 0;
+    let enemyScore = 0;
+    let round = 1;
+    let alive = true;
+    let gameActive = false;
+    let reloading = false;
+    let shootCooldown = 0;
+    let lastShootTime = 0;
 
-    let mouseX = canvas.width/2, mouseY = canvas.height/2;
+    // Игрок (позиция для псевдо-3D)
+    let player = { x: 400, y: 300, angle: 0, fov: 70 };
+    
+    // Противники
+    let enemies = [];
+    
+    // Карта (стены)
+    let walls = [
+        { x1: 100, y1: 100, x2: 800, y2: 100 }, // верх
+        { x1: 100, y1: 500, x2: 800, y2: 500 }, // низ
+        { x1: 100, y1: 100, x2: 100, y2: 500 }, // лево
+        { x1: 800, y1: 100, x2: 800, y2: 500 }, // право
+        { x1: 300, y1: 200, x2: 500, y2: 200 }, // стена в центре
+        { x1: 500, y1: 200, x2: 500, y2: 400 },
+        { x1: 300, y1: 400, x2: 500, y2: 400 }
+    ];
 
     function updateHUD() {
-        document.getElementById('healthFill').style.width = `${Math.max(0, gameState.health)}%`;
-        document.getElementById('healthText').innerHTML = `${Math.max(0, gameState.health)} HP`;
-        document.getElementById('ammoText').innerHTML = `${gameState.ammo}/${gameState.reserveAmmo}`;
-        document.getElementById('moneyText').innerHTML = gameState.money;
-        document.getElementById('roundText').innerHTML = gameState.round;
-        document.getElementById('scoreText').innerHTML = `${gameState.score} : ${gameState.enemyScore}`;
+        document.getElementById('healthFill').style.width = `${Math.max(0, health)}%`;
+        document.getElementById('weaponName').innerHTML = weapons[currentWeapon].name;
+        document.getElementById('ammoText').innerHTML = `${ammo}/${reserveAmmo}`;
+        document.getElementById('moneyText').innerHTML = money;
+        document.getElementById('roundText').innerHTML = round;
+        document.getElementById('scoreText').innerHTML = `${score} : ${enemyScore}`;
     }
 
     function spawnEnemies() {
-        let count = 3 + Math.floor(Math.random() * 4);
-        gameState.enemies = [];
+        enemies = [];
+        let count = 2 + Math.floor(Math.random() * 3) + Math.floor(round / 2);
         for (let i = 0; i < count; i++) {
             let side = Math.random() > 0.5 ? 'left' : 'right';
-            let x = side === 'left' ? 80 + Math.random() * 250 : canvas.width - 80 - Math.random() * 250;
-            let y = 80 + Math.random() * (canvas.height - 160);
-            gameState.enemies.push({ 
-                x, y, health: 100, 
-                type: Math.random() > 0.7 ? 'boss' : 'normal',
-                shootCooldown: 0,
-                angle: 0
-            });
+            let x = side === 'left' ? 50 + Math.random() * 200 : 700 + Math.random() * 150;
+            let y = 100 + Math.random() * 350;
+            enemies.push({ x, y, health: 100, damage: 10, type: 'normal', lastShoot: 0 });
         }
     }
 
-    // Отрисовка противников-людей
-    function drawEnemy(e) {
-        ctx.save();
-        ctx.shadowBlur = 0;
-        
-        // Тело
-        ctx.fillStyle = '#2d2d2d';
-        ctx.beginPath();
-        ctx.ellipse(e.x, e.y - 5, 12, 18, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Голова
-        ctx.fillStyle = '#d4a574';
-        ctx.beginPath();
-        ctx.arc(e.x, e.y - 22, 12, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Балаклава / маска террориста
-        ctx.fillStyle = '#1a1a1a';
-        ctx.beginPath();
-        ctx.ellipse(e.x, e.y - 22, 10, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Глаза
-        ctx.fillStyle = '#ff0000';
-        ctx.beginPath();
-        ctx.arc(e.x - 4, e.y - 25, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(e.x + 4, e.y - 25, 2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Брови
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(e.x - 8, e.y - 30);
-        ctx.lineTo(e.x - 3, e.y - 28);
-        ctx.moveTo(e.x + 8, e.y - 30);
-        ctx.lineTo(e.x + 3, e.y - 28);
-        ctx.stroke();
-        
-        // Оружие в руках
-        ctx.fillStyle = '#555';
-        ctx.fillRect(e.x - 15, e.y - 8, 20, 5);
-        ctx.fillRect(e.x - 10, e.y - 12, 5, 12);
-        
-        // Разгрузка / бронежилет
-        ctx.fillStyle = '#4a5a3a';
-        ctx.fillRect(e.x - 10, e.y - 5, 20, 12);
-        
-        // Ноги
-        ctx.fillStyle = '#2d2d2d';
-        ctx.fillRect(e.x - 10, e.y + 5, 6, 15);
-        ctx.fillRect(e.x + 4, e.y + 5, 6, 15);
-        
-        // Полоска здоровья над головой
-        ctx.fillStyle = '#00aa00';
-        ctx.fillRect(e.x - 20, e.y - 40, 40 * (e.health / 100), 5);
-        ctx.fillStyle = '#aa0000';
-        ctx.fillRect(e.x - 20 + 40 * (e.health / 100), e.y - 40, 40 * (1 - e.health / 100), 5);
-        
-        // Тип противника
-        if (e.type === 'boss') {
-            ctx.fillStyle = '#ff6600';
-            ctx.font = 'bold 10px monospace';
-            ctx.fillText('ELITE', e.x - 15, e.y - 32);
+    function checkCollision(x, y) {
+        for (let wall of walls) {
+            if (x > wall.x1 - 15 && x < wall.x2 + 15 && y > wall.y1 - 15 && y < wall.y2 + 15) return true;
         }
-        
-        ctx.restore();
+        return false;
     }
 
-    function draw() {
-        // Текстура пола
-        ctx.fillStyle = '#2a2a3a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Сетка для текстуры
-        ctx.strokeStyle = '#3a3a4a';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < canvas.width; i += 50) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0);
-            ctx.lineTo(i, canvas.height);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, i % canvas.height);
-            ctx.lineTo(canvas.width, i % canvas.height);
-            ctx.stroke();
+    function moveEnemies() {
+        for (let i = 0; i < enemies.length; i++) {
+            let e = enemies[i];
+            let dx = player.x - e.x;
+            let dy = player.y - e.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 10) {
+                let moveX = (dx / dist) * 1.5;
+                let moveY = (dy / dist) * 1.5;
+                let newX = e.x + moveX;
+                let newY = e.y + moveY;
+                if (!checkCollision(newX, e.y)) e.x = newX;
+                if (!checkCollision(e.x, newY)) e.y = newY;
+            }
+            
+            // Стрельба врагов
+            if (dist < 120 && Date.now() - e.lastShoot > 1000) {
+                e.lastShoot = Date.now();
+                if (gameActive && alive) {
+                    health -= e.damage;
+                    updateHUD();
+                    if (health <= 0) {
+                        health = 0;
+                        alive = false;
+                        gameActive = false;
+                        loseRound();
+                    }
+                }
+            }
         }
-        
-        // Укрытия (ящики, стены)
-        ctx.fillStyle = '#6b4c3b';
-        ctx.shadowBlur = 5;
-        ctx.shadowColor = '#000';
-        ctx.fillRect(150, 180, 100, 120);
-        ctx.fillRect(850, 250, 100, 120);
-        ctx.fillStyle = '#4a6b8a';
-        ctx.fillRect(420, 100, 80, 100);
-        ctx.fillRect(700, 380, 80, 100);
-        
-        // Противники
-        gameState.enemies.forEach(e => drawEnemy(e));
-        
-        // Прицел
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(mouseX - 18, mouseY);
-        ctx.lineTo(mouseX - 6, mouseY);
-        ctx.moveTo(mouseX + 6, mouseY);
-        ctx.lineTo(mouseX + 18, mouseY);
-        ctx.moveTo(mouseX, mouseY - 18);
-        ctx.lineTo(mouseX, mouseY - 6);
-        ctx.moveTo(mouseX, mouseY + 6);
-        ctx.lineTo(mouseX, mouseY + 18);
-        ctx.stroke();
-        
-        ctx.beginPath();
-        ctx.arc(mouseX, mouseY, 10, 0, 2 * Math.PI);
-        ctx.stroke();
-        
-        // Точка в центре прицела
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(mouseX, mouseY, 2, 0, 2 * Math.PI);
-        ctx.fill();
     }
 
     function shoot() {
-        if (!gameState.alive || !gameState.gameActive) return;
-        if (gameState.ammo <= 0) {
-            let weapon = weapons[gameState.currentWeapon];
-            if (gameState.reserveAmmo > 0) {
-                let needed = weapon.magSize - gameState.ammo;
-                let take = Math.min(needed, gameState.reserveAmmo);
-                gameState.ammo += take;
-                gameState.reserveAmmo -= take;
-                updateHUD();
-            }
+        if (!gameActive || !alive || reloading) return;
+        if (Date.now() - lastShootTime < 1000 / weapons[currentWeapon].fireRate) return;
+        if (ammo <= 0) {
+            reload();
             return;
         }
         
-        // Эффект выстрела (вспышка)
+        lastShootTime = Date.now();
+        ammo--;
+        updateHUD();
+        
+        // Анимация выстрела
         ctx.fillStyle = '#ffff00';
         ctx.beginPath();
-        ctx.arc(mouseX, mouseY, 15, 0, 2 * Math.PI);
+        ctx.arc(canvas.width/2, canvas.height/2, 20, 0, 2 * Math.PI);
         ctx.fill();
         
-        for (let i = 0; i < gameState.enemies.length; i++) {
-            let e = gameState.enemies[i];
-            let dx = mouseX - e.x, dy = mouseY - (e.y - 22);
-            if (Math.sqrt(dx*dx + dy*dy) < 35) {
-                let damage = weapons[gameState.currentWeapon].damage;
-                if (e.type === 'boss') damage *= 0.7;
-                e.health -= damage;
-                
-                // Эффект попадания (кровь)
-                ctx.fillStyle = '#ff0000';
-                ctx.beginPath();
-                ctx.arc(e.x, e.y - 22, 8, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                if (e.health <= 0) {
-                    gameState.enemies.splice(i,1);
-                    gameState.money += e.type === 'boss' ? 500 : 300;
-                    updateHUD();
-                    i--;
-                }
-                break;
+        // Проверка попадания
+        let centerX = canvas.width / 2;
+        let centerY = canvas.height / 2;
+        let closest = null;
+        let closestDist = 50;
+        
+        for (let i = 0; i < enemies.length; i++) {
+            let e = enemies[i];
+            let screenX = (e.x - player.x) * Math.cos(-player.angle) - (e.y - player.y) * Math.sin(-player.angle);
+            let screenY = (e.x - player.x) * Math.sin(-player.angle) + (e.y - player.y) * Math.cos(-player.angle);
+            let screenXproj = canvas.width/2 + (screenX / screenY) * 300;
+            let screenYproj = canvas.height/2 + (0 / screenY) * 200;
+            
+            let distToCenter = Math.abs(screenXproj - centerX);
+            if (screenY > 0 && distToCenter < closestDist && distToCenter < 40) {
+                closestDist = distToCenter;
+                closest = i;
             }
         }
-        gameState.ammo--;
-        updateHUD();
-        if (gameState.enemies.length === 0) winRound();
+        
+        if (closest !== null) {
+            let e = enemies[closest];
+            let damage = weapons[currentWeapon].damage;
+            e.health -= damage;
+            
+            // Эффект попадания
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height/2, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            if (e.health <= 0) {
+                enemies.splice(closest, 1);
+                money += 300;
+                updateHUD();
+            }
+        }
+        
+        if (enemies.length === 0 && gameActive) {
+            winRound();
+        }
+    }
+
+    function reload() {
+        if (reloading || ammo === weapons[currentWeapon].magSize) return;
+        reloading = true;
+        setTimeout(() => {
+            let needed = weapons[currentWeapon].magSize - ammo;
+            let take = Math.min(needed, reserveAmmo);
+            ammo += take;
+            reserveAmmo -= take;
+            reloading = false;
+            updateHUD();
+        }, 1500);
     }
 
     function winRound() {
-        gameState.gameActive = false;
-        gameState.score++;
-        gameState.money += 800;
+        gameActive = false;
+        score++;
+        money += 800;
         updateHUD();
-        document.getElementById('roundTitle').innerHTML = 'РАУНД ВЫИГРАН!';
-        document.getElementById('roundDesc').innerHTML = `Вы +800$ | Счёт: ${gameState.score} : ${gameState.enemyScore}`;
-        document.getElementById('roundInfo').style.display = 'block';
+        if (round >= 5) {
+            endGame();
+        } else {
+            round++;
+            updateHUD();
+            setTimeout(() => {
+                health = 100;
+                alive = true;
+                gameActive = true;
+                spawnEnemies();
+                updateHUD();
+            }, 2000);
+        }
     }
 
     function loseRound() {
-        gameState.gameActive = false;
-        gameState.enemyScore++;
+        gameActive = false;
+        enemyScore++;
         updateHUD();
-        document.getElementById('roundTitle').innerHTML = 'ВЫ ПОГИБЛИ';
-        document.getElementById('roundDesc').innerHTML = `Счёт: ${gameState.score} : ${gameState.enemyScore}`;
-        document.getElementById('roundInfo').style.display = 'block';
-    }
-
-    function startRound() {
-        document.getElementById('roundInfo').style.display = 'none';
-        gameState.alive = true;
-        gameState.health = 100;
-        gameState.gameActive = true;
-        updateHUD();
-        spawnEnemies();
-        if (gameState.round > 5) endGame();
+        if (round >= 5) {
+            endGame();
+        } else {
+            round++;
+            setTimeout(() => {
+                health = 100;
+                alive = true;
+                gameActive = true;
+                spawnEnemies();
+                updateHUD();
+            }, 2000);
+        }
     }
 
     function endGame() {
-        gameState.gameActive = false;
-        let isWin = gameState.score > gameState.enemyScore;
+        gameActive = false;
+        let isWin = score > enemyScore;
         document.getElementById('gameOver').style.display = 'block';
         document.getElementById('gameOverTitle').innerHTML = isWin ? 'ПОБЕДА!' : 'ПОРАЖЕНИЕ!';
         document.getElementById('gameOverTitle').className = isWin ? 'game-over-title win' : 'game-over-title lose';
     }
 
     function restartGame() {
-        gameState = { 
-            health:100, money:800, currentWeapon:null, ammo:30, reserveAmmo:90,
-            score:0, enemyScore:0, round:1, alive:true, gameActive:false, enemies:[]
-        };
+        health = 100;
+        money = 800;
+        score = 0;
+        enemyScore = 0;
+        round = 1;
+        currentWeapon = 'pistol';
+        ammo = weapons.pistol.magSize;
+        reserveAmmo = weapons.pistol.maxAmmo;
+        alive = true;
+        gameActive = true;
+        player.x = 400;
+        player.y = 300;
         document.getElementById('gameOver').style.display = 'none';
-        document.getElementById('weaponSelector').style.display = 'flex';
+        spawnEnemies();
         updateHUD();
     }
 
-    document.querySelectorAll('.weapon-btn').forEach(btn => {
-        btn.onclick = () => {
-            let w = weapons[btn.dataset.weapon];
-            if (gameState.money >= w.price) {
-                gameState.money -= w.price;
-                gameState.currentWeapon = btn.dataset.weapon;
-                gameState.ammo = w.magSize;
-                gameState.reserveAmmo = w.maxAmmo;
-                document.getElementById('weaponSelector').style.display = 'none';
-                updateHUD();
-                startRound();
-            } else alert(`Недостаточно денег! Нужно ${w.price}$`);
-        };
+    // Управление
+    const keys = {};
+    document.addEventListener('keydown', (e) => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.key === 'r' || e.key === 'R') reload();
+        if (e.key === ' ' || e.key === 'Space') shoot();
+    });
+    document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+    
+    canvas.addEventListener('click', shoot);
+    
+    canvas.addEventListener('mousemove', (e) => {
+        let rect = canvas.getBoundingClientRect();
+        let mouseX = (e.clientX - rect.left) / rect.width * canvas.width;
+        let angle = (mouseX - canvas.width/2) / canvas.width * Math.PI;
+        player.angle += angle * 0.05;
+        player.angle = Math.min(Math.max(player.angle, -1.2), 1.2);
     });
 
-    canvas.onmousemove = (e) => {
-        let rect = canvas.getBoundingClientRect();
-        let scaleX = canvas.width / rect.width;
-        let scaleY = canvas.height / rect.height;
-        mouseX = (e.clientX - rect.left) * scaleX;
-        mouseY = (e.clientY - rect.top) * scaleY;
-        mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
-        mouseY = Math.min(Math.max(mouseY, 0), canvas.height);
+    function movePlayer() {
+        let speed = 3;
+        let newX = player.x;
+        let newY = player.y;
+        if (keys['w']) { newX += Math.cos(player.angle) * speed; newY += Math.sin(player.angle) * speed; }
+        if (keys['s']) { newX -= Math.cos(player.angle) * speed; newY -= Math.sin(player.angle) * speed; }
+        if (keys['a']) { newX += Math.sin(player.angle) * speed; newY -= Math.cos(player.angle) * speed; }
+        if (keys['d']) { newX -= Math.sin(player.angle) * speed; newY += Math.cos(player.angle) * speed; }
+        if (!checkCollision(newX, player.y)) player.x = newX;
+        if (!checkCollision(player.x, newY)) player.y = newY;
+        player.x = Math.min(Math.max(player.x, 50), 850);
+        player.y = Math.min(Math.max(player.y, 50), 550);
+    }
+
+    function draw3D() {
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Пол
+        ctx.fillStyle = '#2a2a3a';
+        ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
+        ctx.fillStyle = '#3a3a4a';
+        for (let i = 0; i < canvas.width; i += 50) {
+            ctx.fillRect(i, canvas.height/2, 2, canvas.height/2);
+        }
+        
+        // Враги (3D проекция)
+        for (let e of enemies) {
+            let dx = e.x - player.x;
+            let dy = e.y - player.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            let angleToEnemy = Math.atan2(dy, dx);
+            let relativeAngle = angleToEnemy - player.angle;
+            let screenX = canvas.width/2 + (relativeAngle / player.fov) * canvas.width;
+            let size = Math.min(300, 2000 / dist);
+            let screenY = canvas.height/2 - size/2;
+            
+            if (Math.abs(relativeAngle) < 0.8 && dist > 0) {
+                ctx.fillStyle = '#8B0000';
+                ctx.fillRect(screenX - size/3, screenY, size/1.5, size);
+                ctx.fillStyle = '#d4a574';
+                ctx.fillRect(screenX - size/4, screenY - size/4, size/2, size/4);
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(screenX - size/6, screenY + size/4, size/3, size/6);
+                
+                // Полоска здоровья
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(screenX - size/3, screenY - 15, size * 1.5 * (e.health/100), 5);
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(screenX - size/3 + size * 1.5 * (e.health/100), screenY - 15, size * 1.5 * (1 - e.health/100), 5);
+            }
+        }
+        
+        // Прицел
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        let cx = canvas.width/2, cy = canvas.height/2;
+        ctx.beginPath();
+        ctx.moveTo(cx-15, cy); ctx.lineTo(cx-5, cy);
+        ctx.moveTo(cx+5, cy); ctx.lineTo(cx+15, cy);
+        ctx.moveTo(cx, cy-15); ctx.lineTo(cx, cy-5);
+        ctx.moveTo(cx, cy+5); ctx.lineTo(cx, cy+15);
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, 8, 0, 2*Math.PI); ctx.stroke();
+        
+        // Индикатор перезарядки
+        if (reloading) {
+            ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+            ctx.font = 'bold 20px monospace';
+            ctx.fillText('ПЕРЕЗАРЯДКА...', cx-80, cy-50);
+        }
+    }
+
+    // Магазин
+    document.getElementById('shopBtn').onclick = () => {
+        if (!gameActive) return;
+        document.getElementById('shopPanel').style.display = 'block';
+        gameActive = false;
     };
+    document.getElementById('closeShopBtn').onclick = () => {
+        document.getElementById('shopPanel').style.display = 'none';
+        gameActive = true;
+    };
+    document.querySelectorAll('.shop-item').forEach(item => {
+        item.onclick = () => {
+            let weapon = item.dataset.weapon;
+            let w = weapons[weapon];
+            if (money >= w.price) {
+                money -= w.price;
+                currentWeapon = weapon;
+                ammo = w.magSize;
+                reserveAmmo = w.maxAmmo;
+                updateHUD();
+                document.getElementById('shopPanel').style.display = 'none';
+                gameActive = true;
+            } else {
+                alert(`Недостаточно денег! Нужно ${w.price}$`);
+            }
+        };
+    });
     
-    canvas.onclick = () => shoot();
-    document.getElementById('startRoundBtn').onclick = () => { gameState.round++; updateHUD(); startRound(); };
     document.getElementById('restartBtn').onclick = restartGame;
 
-    function animate() { draw(); requestAnimationFrame(animate); }
-    animate();
+    // Game loop
+    function gameLoop() {
+        if (gameActive && alive) {
+            movePlayer();
+            moveEnemies();
+            draw3D();
+        } else {
+            draw3D();
+        }
+        requestAnimationFrame(gameLoop);
+    }
+    
+    spawnEnemies();
+    gameActive = true;
+    alive = true;
     updateHUD();
+    gameLoop();
 </script>
 </body>
 </html>
