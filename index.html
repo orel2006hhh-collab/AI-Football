@@ -159,10 +159,8 @@
         scene.background = new THREE.Color(0x050b1a);
         scene.fog = new THREE.FogExp2(0x050b1a, 0.008);
         
-        // Камера (вид от третьего лица за машиной)
+        // Камера (следует за машиной)
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 3, 8);
-        camera.lookAt(0, 0, 0);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -190,58 +188,68 @@
         backLight.position.set(0, 2, -5);
         scene.add(backLight);
         
-        // Дорожное покрытие
+        // Дорожное покрытие (бесконечное)
+        const roadLength = 400;
         const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.4, metalness: 0.7 });
-        const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 200), roadMaterial);
+        const road = new THREE.Mesh(new THREE.PlaneGeometry(12, roadLength), roadMaterial);
         road.rotation.x = -Math.PI / 2;
         road.position.y = -0.5;
+        road.position.z = -roadLength/2;
         road.receiveShadow = true;
         scene.add(road);
         
-        // Разметка дороги
+        // Разметка дороги (множество линий)
         const lineMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0x442200 });
-        for (let z = -50; z <= 50; z += 2) {
+        const lines = [];
+        for (let z = -roadLength/2; z <= roadLength/2; z += 2) {
             const line = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.5), lineMaterial);
             line.position.set(0, -0.4, z);
             line.castShadow = true;
             scene.add(line);
+            lines.push(line);
         }
         
         // Бордюры
         const curbMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3 });
-        for (let side of [-6, 6]) {
-            for (let z = -50; z <= 50; z += 1) {
-                const curb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), curbMat);
-                curb.position.set(side, -0.3, z);
-                curb.castShadow = true;
-                scene.add(curb);
-            }
+        const leftCurbs = [];
+        const rightCurbs = [];
+        for (let z = -roadLength/2; z <= roadLength/2; z += 1) {
+            const leftCurb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), curbMat);
+            leftCurb.position.set(-6, -0.3, z);
+            leftCurb.castShadow = true;
+            scene.add(leftCurb);
+            leftCurbs.push(leftCurb);
+            
+            const rightCurb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), curbMat);
+            rightCurb.position.set(6, -0.3, z);
+            rightCurb.castShadow = true;
+            scene.add(rightCurb);
+            rightCurbs.push(rightCurb);
         }
         
         // Небо (купол)
-        const skyTexture = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#0a1030';
-            ctx.fillRect(0, 0, 512, 512);
-            ctx.fillStyle = '#1a2a4a';
-            for (let i = 0; i < 200; i++) {
-                ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
-            }
-            return new THREE.CanvasTexture(canvas);
-        };
-        
         const skyMaterial = new THREE.MeshStandardMaterial({ color: 0x0a1030, emissive: 0x0a1030 });
         const skyDome = new THREE.Mesh(new THREE.SphereGeometry(200, 32, 32), skyMaterial);
         skyDome.scale.set(1, 0.4, 1);
         scene.add(skyDome);
         
-        // Машина игрока (спортивный автомобиль)
+        // Звёзды
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 1500;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 500;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 100 + 20;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        
+        // Машина игрока
         const carGroup = new THREE.Group();
         
-        // Кузов
         const bodyGeo = new THREE.BoxGeometry(0.9, 0.4, 1.8);
         const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff3333, metalness: 0.8, roughness: 0.2 });
         const body = new THREE.Mesh(bodyGeo, bodyMat);
@@ -249,7 +257,6 @@
         body.castShadow = true;
         carGroup.add(body);
         
-        // Кабина
         const cabinGeo = new THREE.BoxGeometry(0.7, 0.3, 0.8);
         const cabinMat = new THREE.MeshStandardMaterial({ color: 0x33aaff, metalness: 0.9, roughness: 0.1 });
         const cabin = new THREE.Mesh(cabinGeo, cabinMat);
@@ -257,7 +264,6 @@
         cabin.castShadow = true;
         carGroup.add(cabin);
         
-        // Крыша
         const roofGeo = new THREE.BoxGeometry(0.75, 0.15, 0.85);
         const roofMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7 });
         const roof = new THREE.Mesh(roofGeo, roofMat);
@@ -265,11 +271,10 @@
         roof.castShadow = true;
         carGroup.add(roof);
         
-        // Колёса
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.3, roughness: 0.5 });
         const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.4, 24);
-        const positions = [[-0.6, 0.1, 0.7], [0.6, 0.1, 0.7], [-0.6, 0.1, -0.7], [0.6, 0.1, -0.7]];
-        positions.forEach(pos => {
+        const wheelPositions = [[-0.6, 0.1, 0.7], [0.6, 0.1, 0.7], [-0.6, 0.1, -0.7], [0.6, 0.1, -0.7]];
+        wheelPositions.forEach(pos => {
             const wheel = new THREE.Mesh(wheelGeo, wheelMat);
             wheel.rotation.z = Math.PI / 2;
             wheel.position.set(pos[0], pos[1], pos[2]);
@@ -277,7 +282,6 @@
             carGroup.add(wheel);
         });
         
-        // Фары
         const lightMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4400 });
         const leftLight = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), lightMat);
         leftLight.position.set(-0.4, 0.2, 0.95);
@@ -287,48 +291,45 @@
         carGroup.add(rightLight);
         
         carGroup.position.y = 0;
+        carGroup.position.z = 0;
         scene.add(carGroup);
         
-        // Препятствия (машины-соперники)
+        // Препятствия
         let obstacles = [];
         let score = 0;
         let bestScore = localStorage.getItem('bestScore') || 0;
         let gameActive = true;
         let speed = 0;
         let carX = 0;
-        let lastTime = 0;
         
         document.getElementById('bestScoreValue').innerText = bestScore;
         
         function updateHUD() {
-            document.getElementById('speedValue').innerText = Math.floor(Math.abs(speed) * 20);
+            document.getElementById('speedValue').innerText = Math.floor(Math.abs(speed) * 35);
             document.getElementById('scoreValue').innerText = Math.floor(score);
         }
         
         function createObstacle(x, z) {
             const group = new THREE.Group();
             
-            // Кузов
-            const bodyGeo = new THREE.BoxGeometry(0.85, 0.4, 1.7);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x44aa44, metalness: 0.5 });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 0.2;
-            body.castShadow = true;
-            group.add(body);
+            const bodyGeoB = new THREE.BoxGeometry(0.85, 0.4, 1.7);
+            const bodyMatB = new THREE.MeshStandardMaterial({ color: 0x44aa44, metalness: 0.5 });
+            const bodyB = new THREE.Mesh(bodyGeoB, bodyMatB);
+            bodyB.position.y = 0.2;
+            bodyB.castShadow = true;
+            group.add(bodyB);
             
-            // Кабина
-            const cabinMat = new THREE.MeshStandardMaterial({ color: 0x88ccff });
-            const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.28, 0.75), cabinMat);
-            cabin.position.set(0, 0.45, -0.2);
-            cabin.castShadow = true;
-            group.add(cabin);
+            const cabinMatB = new THREE.MeshStandardMaterial({ color: 0x88ccff });
+            const cabinB = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.28, 0.75), cabinMatB);
+            cabinB.position.set(0, 0.45, -0.2);
+            cabinB.castShadow = true;
+            group.add(cabinB);
             
-            // Колёса
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-            const wheelGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.35, 16);
-            const wheelPos = [[-0.55, 0.1, 0.65], [0.55, 0.1, 0.65], [-0.55, 0.1, -0.65], [0.55, 0.1, -0.65]];
-            wheelPos.forEach(pos => {
-                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            const wheelMatB = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            const wheelGeoB = new THREE.CylinderGeometry(0.28, 0.28, 0.35, 16);
+            const wheelPosB = [[-0.55, 0.1, 0.65], [0.55, 0.1, 0.65], [-0.55, 0.1, -0.65], [0.55, 0.1, -0.65]];
+            wheelPosB.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeoB, wheelMatB);
                 wheel.rotation.z = Math.PI / 2;
                 wheel.position.set(pos[0], pos[1], pos[2]);
                 wheel.castShadow = true;
@@ -342,7 +343,8 @@
         
         function spawnObstacle() {
             const lane = (Math.random() - 0.5) * 5;
-            const obstacle = createObstacle(lane, -30);
+            const zPos = -roadLength/2 - 5;
+            const obstacle = createObstacle(lane, zPos);
             obstacles.push(obstacle);
         }
         
@@ -384,7 +386,7 @@
             updateHUD();
             document.getElementById('gameOver').style.display = 'none';
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 6; i++) {
                 spawnObstacle();
             }
         }
@@ -395,7 +397,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
             if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
-            if (e.key === ' ' && !gameActive) restartGame();
         });
         
         document.addEventListener('keyup', (e) => {
@@ -407,68 +408,103 @@
             restartGame();
         });
         
-        // Анимация
-        let particles = [];
-        
+        // Пыль
         function createDust() {
             const dustMat = new THREE.MeshStandardMaterial({ color: 0x888888, emissive: 0x442200 });
-            const dust = new THREE.Mesh(new THREE.SphereGeometry(0.1, 4, 4), dustMat);
-            dust.position.set((Math.random() - 0.5) * 2, -0.2, -1.5);
+            const dust = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), dustMat);
+            dust.position.set((Math.random() - 0.5) * 1.5, -0.2, -1.2);
             carGroup.add(dust);
             setTimeout(() => carGroup.remove(dust), 200);
         }
         
-        // Камера, следующая за машиной
+        // Обновление камеры (следит за машиной)
         function updateCamera() {
-            const targetX = carGroup.position.x * 0.5;
+            // Камера всегда позади машины на фиксированном расстоянии
+            const targetX = carGroup.position.x * 0.3;
             camera.position.x += (targetX - camera.position.x) * 0.1;
-            camera.position.y = 3 + Math.abs(speed) * 0.5;
-            camera.lookAt(carGroup.position.x, 0, carGroup.position.z + 5);
+            camera.position.y = 3 + Math.abs(speed) * 0.3;
+            camera.position.z = carGroup.position.z + 5;
+            camera.lookAt(carGroup.position.x, 0, carGroup.position.z);
+        }
+        
+        // Анимация движения мира (препятствия и разметка движутся к игроку)
+        let worldOffset = 0;
+        
+        function animateWorld() {
+            if (!gameActive) return;
+            
+            // Движение препятствий
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].position.z += speed;
+                if (obstacles[i].position.z > roadLength/2 + 10) {
+                    scene.remove(obstacles[i]);
+                    obstacles.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            // Движение разметки (создаём эффект бесконечной дороги)
+            for (let line of lines) {
+                line.position.z += speed;
+                if (line.position.z > roadLength/2) {
+                    line.position.z = -roadLength/2;
+                }
+            }
+            
+            for (let curb of leftCurbs) {
+                curb.position.z += speed;
+                if (curb.position.z > roadLength/2) {
+                    curb.position.z = -roadLength/2;
+                }
+            }
+            
+            for (let curb of rightCurbs) {
+                curb.position.z += speed;
+                if (curb.position.z > roadLength/2) {
+                    curb.position.z = -roadLength/2;
+                }
+            }
+            
+            // Спавн новых препятствий
+            if (Math.random() < 0.015 && obstacles.length < 8) {
+                spawnObstacle();
+            }
         }
         
         function animate() {
             if (gameActive) {
-                // Управление машиной
+                // Управление
                 let turn = 0;
                 if (keys.left) turn = -1;
                 if (keys.right) turn = 1;
                 
-                // Ускорение и торможение
+                // Ускорение
                 speed += 0.02;
                 speed = Math.min(speed, 2.5);
                 
+                // Поворот и движение машины
                 carX += turn * 0.08;
                 carX = Math.min(Math.max(carX, -4.5), 4.5);
                 carGroup.position.x = carX;
-                carGroup.position.z += speed;
                 
-                // Поворот руля
-                carGroup.rotation.y = turn * 0.15;
-                carGroup.rotation.x = Math.sin(Date.now() * 0.01) * 0.02;
+                // Вращение машины при повороте
+                carGroup.rotation.y = turn * 0.12;
+                carGroup.rotation.x = Math.sin(Date.now() * 0.015) * 0.02;
                 
-                // Дым из под колёс
-                if (speed > 1.5 && Math.random() > 0.7) createDust();
+                // Дым при высокой скорости
+                if (speed > 1.5 && Math.random() > 0.8) createDust();
                 
                 // Обновление счёта
-                score += speed * 1.5;
+                score += speed * 0.8;
                 updateHUD();
                 
-                // Спавн препятствий
-                if (Math.random() < 0.02) spawnObstacle();
+                // Движение мира относительно машины
+                animateWorld();
                 
-                // Движение препятствий
-                for (let i = 0; i < obstacles.length; i++) {
-                    obstacles[i].position.z += speed;
-                    if (obstacles[i].position.z > 15) {
-                        scene.remove(obstacles[i]);
-                        obstacles.splice(i, 1);
-                        i--;
-                    }
-                }
-                
-                // Проверка коллизии
+                // Проверка столкновений
                 checkCollision();
                 
+                // Обновление камеры (следит за машиной)
                 updateCamera();
             }
             
@@ -481,23 +517,13 @@
         }
         
         // Стартовые препятствия
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
             spawnObstacle();
         }
         
-        // Звёзды на небе
-        const starGeometry = new THREE.BufferGeometry();
-        const starCount = 1000;
-        const starPositions = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            starPositions[i*3] = (Math.random() - 0.5) * 400;
-            starPositions[i*3+1] = (Math.random() - 0.5) * 100 + 20;
-            starPositions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
-        }
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 });
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
+        // Начальная позиция камеры
+        camera.position.set(0, 3, 5);
+        camera.lookAt(0, 0, 0);
         
         animate();
         
