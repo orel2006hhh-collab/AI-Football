@@ -2,38 +2,245 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>CS:Lite — Тактический шутер</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .game-container { background: rgba(0,0,0,0.8); border-radius: 20px; padding: 20px; border: 1px solid #ffd700; }
-        .hud { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.7); border-radius: 10px; padding: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .health-bar { width: 200px; height: 20px; background: #333; border-radius: 10px; overflow: hidden; position: relative; }
-        .health-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #0f0, #ff0, #f00); border-radius: 10px; transition: width 0.3s; }
-        .health-bar span { position: absolute; left: 50%; transform: translateX(-50%); font-size: 12px; color: white; }
-        .ammo, .money, .round, .score { background: #111; padding: 5px 15px; border-radius: 5px; font-size: 18px; }
-        .weapon-selector { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: linear-gradient(135deg,#1a1a2e,#0f0f23); border: 2px solid #ffd700; border-radius: 20px; padding: 30px; text-align: center; z-index: 100; }
-        .weapon-title { font-size: 28px; font-weight: bold; color: #ffd700; margin-bottom: 20px; }
-        .weapon-list { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
-        .weapon-btn { background: linear-gradient(135deg,#2c3e50,#1a252f); border: 1px solid #ffd700; color: white; padding: 12px 25px; cursor: pointer; border-radius: 10px; font-family: monospace; }
-        .weapon-btn:hover { background: linear-gradient(135deg,#ffd700,#ffaa00); color: #000; }
-        canvas { border-radius: 10px; cursor: crosshair; background: #2d2d2d; display: block; margin: 0 auto; }
-        .controls-hint { text-align: center; margin-top: 10px; font-size: 12px; color: #ffd700; }
-        .round-info { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: linear-gradient(135deg,#1a1a2e,#0f0f23); border: 2px solid #ffd700; border-radius: 20px; padding: 30px; text-align: center; z-index: 100; }
-        .round-title { font-size: 32px; font-weight: bold; color: #ffd700; margin-bottom: 15px; }
-        .start-btn { background: linear-gradient(135deg,#ffd700,#ffaa00); border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; }
-        .game-over { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: linear-gradient(135deg,#1a1a2e,#0f0f23); border: 2px solid #f44; border-radius: 20px; padding: 40px; text-align: center; z-index: 100; }
-        .game-over-title { font-size: 36px; font-weight: bold; margin-bottom: 20px; }
-        .game-over-title.win { color: #0f0; }
-        .game-over-title.lose { color: #f44; }
-        .restart-btn { background: linear-gradient(135deg,#ffd700,#ffaa00); border: none; padding: 12px 30px; font-size: 18px; border-radius: 10px; cursor: pointer; }
-        @media (max-width: 1300px) { canvas { width: 100%; height: auto; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0f1a 0%, #1a1f2e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid #ffd700;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .health-bar {
+            width: 220px;
+            height: 22px;
+            background: #2a2a2a;
+            border-radius: 11px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .health-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #00cc00, #ffff00, #ff3300);
+            border-radius: 11px;
+            transition: width 0.3s;
+        }
+
+        .health-bar span {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: white;
+            line-height: 22px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .ammo, .money, .round, .score {
+            background: #1a1a2a;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: monospace;
+            border: 1px solid #ffd700;
+        }
+
+        .weapon-selector {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+        }
+
+        .weapon-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .weapon-list {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .weapon-btn {
+            background: linear-gradient(135deg, #2c3e50, #1a252f);
+            border: 1px solid #ffd700;
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: 0.2s;
+            font-family: monospace;
+        }
+
+        .weapon-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #000;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        canvas {
+            border-radius: 12px;
+            cursor: crosshair;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            background: #1a1a2a;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .controls-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .round-info {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .round-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
+        .round-desc {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #ccc;
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: monospace;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+            border: 2px solid #ff4444;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .game-over-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .game-over-title.win {
+            color: #00ff00;
+        }
+
+        .game-over-title.lose {
+            color: #ff4444;
+        }
+
+        @media (max-width: 1300px) {
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+            .weapon-list {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="game-container">
     <div class="hud">
-        <div class="health-bar"><div class="health-fill" id="healthFill"></div><span id="healthText">100 HP</span></div>
+        <div class="health-bar">
+            <div class="health-fill" id="healthFill"></div>
+            <span id="healthText">100 HP</span>
+        </div>
         <div class="ammo"><span id="ammoText">30/90</span></div>
         <div class="money">💰 <span id="moneyText">800</span>$</div>
         <div class="round">Раунд <span id="roundText">1</span>/5</div>
@@ -93,45 +300,149 @@
     }
 
     function spawnEnemies() {
-        let count = 3 + Math.floor(Math.random() * 3);
+        let count = 3 + Math.floor(Math.random() * 4);
         gameState.enemies = [];
         for (let i = 0; i < count; i++) {
-            let x = 100 + Math.random() * (canvas.width - 200);
+            let side = Math.random() > 0.5 ? 'left' : 'right';
+            let x = side === 'left' ? 80 + Math.random() * 250 : canvas.width - 80 - Math.random() * 250;
             let y = 80 + Math.random() * (canvas.height - 160);
-            gameState.enemies.push({ x, y, health: 100, size: 30 });
+            gameState.enemies.push({ 
+                x, y, health: 100, 
+                type: Math.random() > 0.7 ? 'boss' : 'normal',
+                shootCooldown: 0,
+                angle: 0
+            });
         }
     }
 
+    // Отрисовка противников-людей
+    function drawEnemy(e) {
+        ctx.save();
+        ctx.shadowBlur = 0;
+        
+        // Тело
+        ctx.fillStyle = '#2d2d2d';
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y - 5, 12, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Голова
+        ctx.fillStyle = '#d4a574';
+        ctx.beginPath();
+        ctx.arc(e.x, e.y - 22, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Балаклава / маска террориста
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y - 22, 10, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Глаза
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(e.x - 4, e.y - 25, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(e.x + 4, e.y - 25, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Брови
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(e.x - 8, e.y - 30);
+        ctx.lineTo(e.x - 3, e.y - 28);
+        ctx.moveTo(e.x + 8, e.y - 30);
+        ctx.lineTo(e.x + 3, e.y - 28);
+        ctx.stroke();
+        
+        // Оружие в руках
+        ctx.fillStyle = '#555';
+        ctx.fillRect(e.x - 15, e.y - 8, 20, 5);
+        ctx.fillRect(e.x - 10, e.y - 12, 5, 12);
+        
+        // Разгрузка / бронежилет
+        ctx.fillStyle = '#4a5a3a';
+        ctx.fillRect(e.x - 10, e.y - 5, 20, 12);
+        
+        // Ноги
+        ctx.fillStyle = '#2d2d2d';
+        ctx.fillRect(e.x - 10, e.y + 5, 6, 15);
+        ctx.fillRect(e.x + 4, e.y + 5, 6, 15);
+        
+        // Полоска здоровья над головой
+        ctx.fillStyle = '#00aa00';
+        ctx.fillRect(e.x - 20, e.y - 40, 40 * (e.health / 100), 5);
+        ctx.fillStyle = '#aa0000';
+        ctx.fillRect(e.x - 20 + 40 * (e.health / 100), e.y - 40, 40 * (1 - e.health / 100), 5);
+        
+        // Тип противника
+        if (e.type === 'boss') {
+            ctx.fillStyle = '#ff6600';
+            ctx.font = 'bold 10px monospace';
+            ctx.fillText('ELITE', e.x - 15, e.y - 32);
+        }
+        
+        ctx.restore();
+    }
+
     function draw() {
-        ctx.fillStyle = '#3a3a3a';
+        // Текстура пола
+        ctx.fillStyle = '#2a2a3a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#8B6914';
-        ctx.fillRect(180, 150, 80, 200);
-        ctx.fillRect(850, 280, 80, 200);
-        ctx.fillStyle = '#4169E1';
-        ctx.fillRect(450, 80, 70, 120);
-        ctx.fillRect(680, 380, 70, 120);
-
-        gameState.enemies.forEach(e => {
-            ctx.fillStyle = '#8B0000';
-            ctx.fillRect(e.x - 15, e.y - 20, 30, 40);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px monospace';
-            ctx.fillText('☠', e.x - 8, e.y - 5);
-            ctx.fillStyle = '#0f0';
-            ctx.fillRect(e.x - 15, e.y - 30, 30 * (e.health / 100), 5);
-            ctx.fillStyle = '#f00';
-            ctx.fillRect(e.x - 15 + 30 * (e.health / 100), e.y - 30, 30 * (1 - e.health / 100), 5);
-        });
-
+        
+        // Сетка для текстуры
+        ctx.strokeStyle = '#3a3a4a';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += 50) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, canvas.height);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i % canvas.height);
+            ctx.lineTo(canvas.width, i % canvas.height);
+            ctx.stroke();
+        }
+        
+        // Укрытия (ящики, стены)
+        ctx.fillStyle = '#6b4c3b';
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = '#000';
+        ctx.fillRect(150, 180, 100, 120);
+        ctx.fillRect(850, 250, 100, 120);
+        ctx.fillStyle = '#4a6b8a';
+        ctx.fillRect(420, 100, 80, 100);
+        ctx.fillRect(700, 380, 80, 100);
+        
+        // Противники
+        gameState.enemies.forEach(e => drawEnemy(e));
+        
+        // Прицел
+        ctx.shadowBlur = 0;
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(mouseX-15, mouseY); ctx.lineTo(mouseX-5, mouseY);
-        ctx.moveTo(mouseX+5, mouseY); ctx.lineTo(mouseX+15, mouseY);
-        ctx.moveTo(mouseX, mouseY-15); ctx.lineTo(mouseX, mouseY-5);
-        ctx.moveTo(mouseX, mouseY+5); ctx.lineTo(mouseX, mouseY+15);
+        ctx.beginPath();
+        ctx.moveTo(mouseX - 18, mouseY);
+        ctx.lineTo(mouseX - 6, mouseY);
+        ctx.moveTo(mouseX + 6, mouseY);
+        ctx.lineTo(mouseX + 18, mouseY);
+        ctx.moveTo(mouseX, mouseY - 18);
+        ctx.lineTo(mouseX, mouseY - 6);
+        ctx.moveTo(mouseX, mouseY + 6);
+        ctx.lineTo(mouseX, mouseY + 18);
         ctx.stroke();
-        ctx.beginPath(); ctx.arc(mouseX, mouseY, 8, 0, 2*Math.PI); ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 10, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        // Точка в центре прицела
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 2, 0, 2 * Math.PI);
+        ctx.fill();
     }
 
     function shoot() {
@@ -147,14 +458,30 @@
             }
             return;
         }
+        
+        // Эффект выстрела (вспышка)
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 15, 0, 2 * Math.PI);
+        ctx.fill();
+        
         for (let i = 0; i < gameState.enemies.length; i++) {
             let e = gameState.enemies[i];
-            let dx = mouseX - e.x, dy = mouseY - e.y;
-            if (Math.sqrt(dx*dx + dy*dy) < 40) {
-                e.health -= weapons[gameState.currentWeapon].damage;
+            let dx = mouseX - e.x, dy = mouseY - (e.y - 22);
+            if (Math.sqrt(dx*dx + dy*dy) < 35) {
+                let damage = weapons[gameState.currentWeapon].damage;
+                if (e.type === 'boss') damage *= 0.7;
+                e.health -= damage;
+                
+                // Эффект попадания (кровь)
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(e.x, e.y - 22, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                
                 if (e.health <= 0) {
                     gameState.enemies.splice(i,1);
-                    gameState.money += 300;
+                    gameState.money += e.type === 'boss' ? 500 : 300;
                     updateHUD();
                     i--;
                 }
@@ -204,7 +531,10 @@
     }
 
     function restartGame() {
-        gameState = { health:100, money:800, currentWeapon:null, ammo:30, reserveAmmo:90, score:0, enemyScore:0, round:1, alive:true, gameActive:false, enemies:[] };
+        gameState = { 
+            health:100, money:800, currentWeapon:null, ammo:30, reserveAmmo:90,
+            score:0, enemyScore:0, round:1, alive:true, gameActive:false, enemies:[]
+        };
         document.getElementById('gameOver').style.display = 'none';
         document.getElementById('weaponSelector').style.display = 'flex';
         updateHUD();
@@ -234,6 +564,7 @@
         mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
         mouseY = Math.min(Math.max(mouseY, 0), canvas.height);
     };
+    
     canvas.onclick = () => shoot();
     document.getElementById('startRoundBtn').onclick = () => { gameState.round++; updateHUD(); startRound(); };
     document.getElementById('restartBtn').onclick = restartGame;
