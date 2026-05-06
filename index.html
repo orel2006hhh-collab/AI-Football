@@ -204,7 +204,7 @@
         <div class="money">💰 <span id="moneyText">800</span>$</div>
         <div class="round">Раунд <span id="roundText">1</span>/5</div>
         <div class="score">🏆 <span id="scoreText">0</span> : <span id="enemyScoreText">0</span></div>
-        <button class="shop-btn" id="shopBtn">🛒 МАГАЗИН</button>
+        <button class="shop-btn" id="shopBtn">🛒 МАГАЗИН (B)</button>
     </div>
     
     <div class="crosshair"></div>
@@ -238,7 +238,7 @@
     </div>
     
     <div class="controls-hint">
-        🖱️ Мышь — прицел | 🔫 ЛКМ — выстрел | 🔄 R — перезарядка
+        🖱️ Мышь — прицел | 🔫 ЛКМ — выстрел | 🔄 R — перезарядка | 🚶 WASD — движение | 🛒 B — магазин
     </div>
 
     <script type="importmap">
@@ -292,6 +292,7 @@
         
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 1.6, 0);
+        camera.rotation.order = 'YXZ';
         
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -381,15 +382,6 @@
             group.add(leftEye);
             group.add(rightEye);
             
-            // Руки (для анимации)
-            const armMat = new THREE.MeshStandardMaterial({ color: 0xcc3333 });
-            const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), armMat);
-            leftArm.position.set(-0.55, 0.9, 0);
-            const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.3), armMat);
-            rightArm.position.set(0.55, 0.9, 0);
-            group.add(leftArm);
-            group.add(rightArm);
-            
             // Оружие
             const gunMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
             const gun = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.2), gunMat);
@@ -415,7 +407,7 @@
             }
         }
         
-        // Анимация врагов (движение к игроку)
+        // Движение врагов к игроку
         function moveEnemies() {
             for (let enemy of enemiesList) {
                 let dx = -enemy.position.x;
@@ -442,6 +434,68 @@
                         loseRound();
                     }
                 }
+            }
+        }
+        
+        // Движение игрока (WASD)
+        const keyState = { w: false, s: false, a: false, d: false };
+        
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'w') keyState.w = true;
+            if (key === 's') keyState.s = true;
+            if (key === 'a') keyState.a = true;
+            if (key === 'd') keyState.d = true;
+            if (key === 'r') reload();
+            if (key === 'b') toggleShop();
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'w') keyState.w = false;
+            if (key === 's') keyState.s = false;
+            if (key === 'a') keyState.a = false;
+            if (key === 'd') keyState.d = false;
+        });
+        
+        function movePlayer() {
+            const speed = 5;
+            const direction = new THREE.Vector3();
+            const forward = new THREE.Vector3();
+            const right = new THREE.Vector3();
+            
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+            forward.normalize();
+            right.crossVectors(new THREE.Vector3(0, 1, 0), forward);
+            right.normalize();
+            
+            if (keyState.w) direction.add(forward);
+            if (keyState.s) direction.sub(forward);
+            if (keyState.d) direction.add(right);
+            if (keyState.a) direction.sub(right);
+            
+            direction.multiplyScalar(speed * 0.016);
+            
+            let newX = camera.position.x + direction.x;
+            let newZ = camera.position.z + direction.z;
+            
+            // Проверка коллизий со стенами
+            let collision = false;
+            for (let wall of walls) {
+                let wallMinX = wall.pos[0] - wall.size[0]/2;
+                let wallMaxX = wall.pos[0] + wall.size[0]/2;
+                let wallMinZ = wall.pos[2] - wall.size[2]/2;
+                let wallMaxZ = wall.pos[2] + wall.size[2]/2;
+                if (newX > wallMinX - 0.5 && newX < wallMaxX + 0.5 && newZ > wallMinZ - 0.5 && newZ < wallMaxZ + 0.5) {
+                    collision = true;
+                    break;
+                }
+            }
+            
+            if (!collision) {
+                camera.position.x = newX;
+                camera.position.z = newZ;
             }
         }
         
@@ -475,7 +529,7 @@
                 let hit = intersects[0].object.parent;
                 hit.userData.health -= weapons[currentWeapon].damage;
                 
-                // Эффект попадания (красная вспышка)
+                // Эффект попадания
                 hit.children.forEach(child => {
                     if (child.material) {
                         const originalColor = child.material.color.getHex();
@@ -573,48 +627,47 @@
             updateHUD();
         }
         
+        function toggleShop() {
+            if (!gameActive) return;
+            const panel = document.getElementById('shopPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                gameActive = false;
+            } else {
+                panel.style.display = 'none';
+                gameActive = true;
+            }
+        }
+        
         // Обработчики
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.shop-panel')) return;
-            if (e.target.closest('.shop-btn')) return;
-            if (e.target.closest('.close-shop')) return;
-            if (e.target.closest('.restart-btn')) return;
+        document.addEventListener('click', () => {
+            if (document.getElementById('shopPanel').style.display === 'block') return;
             shoot();
         });
         
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'r' || e.key === 'R') reload();
-        });
-        
-        // Управление мышью
+        // Управление мышью (поворот камеры)
         let mouseX = 0, mouseY = 0;
-        document.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-            mouseY = (e.clientY / window.innerHeight) * 2 - 1;
-            mouse.x = mouseX;
-            mouse.y = mouseY;
-        });
-        
-        // Захват мыши
         document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock;
-        document.body.onclick = () => {
+        
+        document.body.addEventListener('click', () => {
+            if (document.getElementById('shopPanel').style.display === 'block') return;
             if (!document.pointerLockElement) document.body.requestPointerLock();
-        };
+        });
         
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement === document.body) {
                 camera.rotation.y -= e.movementX * 0.002;
                 camera.rotation.x -= e.movementY * 0.002;
                 camera.rotation.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, camera.rotation.x));
+                
+                // Обновление прицела для рэйкаста
+                mouse.x = 0;
+                mouse.y = 0;
             }
         });
         
         // Магазин
-        document.getElementById('shopBtn').onclick = () => {
-            document.getElementById('shopPanel').style.display = 'block';
-            if (document.pointerLockElement) document.exitPointerLock();
-            gameActive = false;
-        };
+        document.getElementById('shopBtn').onclick = toggleShop;
         document.getElementById('closeShopBtn').onclick = () => {
             document.getElementById('shopPanel').style.display = 'none';
             gameActive = true;
@@ -641,17 +694,21 @@
         document.getElementById('restartBtn').onclick = restartGame;
         
         // Анимация
+        let lastTime = 0;
         function animate() {
+            const now = performance.now();
+            const delta = Math.min(0.033, (now - lastTime) / 1000);
+            lastTime = now;
+            
             if (gameActive && alive) {
+                movePlayer();
                 moveEnemies();
             }
             
-            // Камера следует за мышью
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
         
-        // Округление времени
         updateHUD();
         spawnEnemies();
         animate();
