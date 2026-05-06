@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CS:Lite — Тактический шутер</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="game-container">
+        <div class="hud">
+            <div class="health-bar">
+                <div class="health-fill" id="healthFill"></div>
+                <span id="healthText">100 HP</span>
+            </div>
+            <div class="ammo">
+                <span id="ammoText">30/90</span>
+            </div>
+            <div class="money">
+                💰 <span id="moneyText">800</span>$
+            </div>
+            <div class="round">
+                Раунд <span id="roundText">1</span>/5
+            </div>
+            <div class="score">
+                🏆 <span id="scoreText">0</span> : <span id="enemyScoreText">0</span>
+            </div>
+        </div>
+        
+        <div class="weapon-selector" id="weaponSelector">
+            <div class="weapon-title">ВЫБЕРИТЕ ОРУЖИЕ</div>
+            <div class="weapon-list">
+                <button class="weapon-btn" data-weapon="pistol">🔫 P250 (300$)</button>
+                <button class="weapon-btn" data-weapon="rifle">🔫 AK-47 (2700$)</button>
+                <button class="weapon-btn" data-weapon="sniper">🔫 AWP (4750$)</button>
+                <button class="weapon-btn" data-weapon="shotgun">🔫 XM1014 (2000$)</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="1200" height="600"></canvas>
+            <div class="controls-hint">
+                🖱️ Наведите прицел → Кликните, чтобы выстрелить
+            </div>
+        </div>
+        
+        <div class="round-info" id="roundInfo">
+            <div class="round-title">РАУНД НАЧАЛСЯ!</div>
+            <div class="round-desc">Уничтожьте всех террористов</div>
+            <button class="start-btn" id="startRoundBtn">НАЧАТЬ РАУНД</button>
+        </div>
+        
+        <div class="game-over" id="gameOver" style="display: none;">
+            <div class="game-over-title" id="gameOverTitle"></div>
+            <button class="restart-btn" id="restartBtn">ИГРАТЬ СНОВА</button>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>
