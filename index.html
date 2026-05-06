@@ -3,535 +3,653 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>KARMA RACER — 3D Гоночная игра</title>
+    <title>PLATFORMER ADVENTURE — Прыгай и собирай!</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
-            font-family: 'Orbitron', 'Courier New', monospace;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0f2a 0%, #1a1f4a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .game-container {
+            position: relative;
+            background: #000;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 12px;
+            cursor: pointer;
         }
         
         .hud {
-            position: fixed;
+            position: absolute;
             top: 20px;
             left: 20px;
             right: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(10px);
-            padding: 15px 25px;
-            border-radius: 15px;
-            border: 1px solid rgba(0, 255, 100, 0.5);
-            color: #0ff;
-            z-index: 100;
-            font-weight: bold;
-            font-family: 'Orbitron', monospace;
-            letter-spacing: 2px;
-            text-shadow: 0 0 5px #0ff;
-        }
-        
-        .speedometer {
-            background: linear-gradient(135deg, #000, #1a1a2a);
-            padding: 8px 25px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            padding: 10px 20px;
             border-radius: 30px;
-            border: 1px solid #0ff;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        }
-        
-        .speed-value {
-            font-size: 28px;
+            border: 1px solid #ffd700;
+            color: #ffd700;
             font-weight: bold;
-            color: #0ff;
+            z-index: 10;
+            font-size: 18px;
         }
         
-        .score-board, .best-score {
-            background: linear-gradient(135deg, #000, #1a1a2a);
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: 1px solid #ff0;
-            box-shadow: 0 0 15px rgba(255, 255, 0, 0.3);
+        .score, .coins {
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
         }
         
         .game-over {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #000, #1a1a2a);
+            background: linear-gradient(135deg, #000, #1a0a0a);
             border: 2px solid #ff3300;
             border-radius: 30px;
-            padding: 40px;
+            padding: 30px 50px;
             text-align: center;
-            z-index: 200;
+            z-index: 20;
             color: white;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
-            min-width: 400px;
+            backdrop-filter: blur(10px);
         }
         
-        .game-over-title {
-            font-size: 48px;
-            font-weight: bold;
+        .game-over h2 {
+            font-size: 36px;
             color: #ff3300;
             margin-bottom: 20px;
-            text-shadow: 0 0 10px #ff3300;
         }
         
         .restart-btn {
-            background: linear-gradient(135deg, #ff3300, #ff6600);
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
             border: none;
-            padding: 15px 40px;
-            font-size: 20px;
+            padding: 10px 30px;
+            font-size: 18px;
             font-weight: bold;
-            border-radius: 50px;
+            border-radius: 30px;
             cursor: pointer;
-            margin-top: 20px;
-            color: white;
+            margin-top: 15px;
             transition: 0.2s;
         }
         
         .restart-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(255, 51, 0, 0.5);
+            box-shadow: 0 0 20px rgba(255,215,0,0.5);
         }
         
         .controls {
-            position: fixed;
+            position: absolute;
             bottom: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
-            border-radius: 15px;
-            color: #0ff;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #ffd700;
             font-size: 12px;
-            font-family: monospace;
-            backdrop-filter: blur(5px);
-            z-index: 100;
+            z-index: 10;
         }
         
-        @media (max-width: 800px) {
-            .hud { font-size: 10px; padding: 10px 15px; }
-            .speed-value { font-size: 18px; }
-            .game-over-title { font-size: 28px; }
-            .game-over { min-width: 300px; padding: 25px; }
+        @media (max-width: 900px) {
+            .hud { font-size: 12px; padding: 6px 12px; }
+            .game-over h2 { font-size: 24px; }
+            .game-over { padding: 20px 30px; }
         }
     </style>
 </head>
 <body>
+<div class="game-container">
+    <canvas id="gameCanvas" width="1000" height="550"></canvas>
+    
     <div class="hud">
-        <div class="speedometer">
-            🏁 <span class="speed-value" id="speedValue">0</span> <span style="font-size:12px">KM/H</span>
-        </div>
-        <div class="score-board">
-            🎯 SCORE: <span id="scoreValue">0</span>
-        </div>
-        <div class="best-score">
-            🏆 BEST: <span id="bestScoreValue">0</span>
-        </div>
+        <div class="score">⭐ СЧЁТ: <span id="scoreValue">0</span></div>
+        <div class="coins">🪙 МОНЕТЫ: <span id="coinsValue">0</span></div>
     </div>
     
     <div class="controls">
-        🎮 A/D или ←/→ — управление | 🚀 Набирайте очки, объезжая препятствия
+        🎮 A/D или ←/→ — движение | ПРОБЕЛ или ↑ — прыжок
     </div>
     
     <div class="game-over" id="gameOver" style="display: none;">
-        <div class="game-over-title" id="gameOverTitle">GAME OVER</div>
-        <div style="font-size: 20px; margin-bottom: 10px;">Ваш счёт: <span id="finalScore">0</span></div>
-        <div style="font-size: 16px; margin-bottom: 20px; color: #0ff;">Лучший: <span id="bestScoreFinal">0</span></div>
-        <button class="restart-btn" id="restartBtn">🔄 НАЧАТЬ ЗАНОВО</button>
+        <h2>💀 GAME OVER 💀</h2>
+        <div style="font-size: 18px; margin: 10px 0;">Ваш счёт: <span id="finalScore">0</span></div>
+        <div style="font-size: 14px; margin-bottom: 15px;">Монет собрано: <span id="finalCoins">0</span></div>
+        <button class="restart-btn" id="restartBtn">🔄 ИГРАТЬ СНОВА</button>
     </div>
+</div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Размеры игрового мира
+    const GAME_WIDTH = 3000;
+    const GRAVITY = 0.5;
+    const JUMP_POWER = -9;
+    
+    // Камера
+    let cameraX = 0;
+    
+    // Игрок
+    let player = {
+        x: 100,
+        y: 450,
+        vx: 0,
+        vy: 0,
+        width: 30,
+        height: 35,
+        onGround: true,
+        facingRight: true
+    };
+    
+    // Платформы
+    let platforms = [];
+    
+    // Монеты
+    let coins = [];
+    
+    // Враги
+    let enemies = [];
+    
+    // Игровые переменные
+    let score = 0;
+    let coinsCollected = 0;
+    let gameRunning = true;
+    let animFrame;
+    
+    // Управление
+    const keys = { left: false, right: false, jump: false };
+    
+    // Флаги для прыжка
+    let canJump = true;
+    let jumpPressed = false;
+    
+    // ============ СОЗДАНИЕ УРОВНЯ ============
+    function createLevel() {
+        // Земля (основание)
+        platforms.push({ x: 0, y: 520, width: GAME_WIDTH, height: 30, color: '#5a3a1a' });
         
-        // Инициализация сцены
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050b1a);
-        scene.fog = new THREE.FogExp2(0x050b1a, 0.008);
+        // Платформы
+        const platformList = [
+            { x: 200, y: 470, width: 80, height: 20 },
+            { x: 350, y: 430, width: 70, height: 20 },
+            { x: 500, y: 470, width: 100, height: 20 },
+            { x: 680, y: 420, width: 60, height: 20 },
+            { x: 800, y: 380, width: 70, height: 20 },
+            { x: 950, y: 440, width: 80, height: 20 },
+            { x: 1100, y: 390, width: 65, height: 20 },
+            { x: 1250, y: 460, width: 90, height: 20 },
+            { x: 1400, y: 410, width: 70, height: 20 },
+            { x: 1550, y: 360, width: 60, height: 20 },
+            { x: 1680, y: 430, width: 80, height: 20 },
+            { x: 1850, y: 480, width: 100, height: 20 },
+            { x: 2000, y: 400, width: 70, height: 20 },
+            { x: 2150, y: 350, width: 65, height: 20 },
+            { x: 2300, y: 420, width: 80, height: 20 },
+            { x: 2450, y: 370, width: 70, height: 20 },
+            { x: 2600, y: 450, width: 90, height: 20 },
+            { x: 2750, y: 390, width: 65, height: 20 },
+            { x: 2900, y: 350, width: 60, height: 20 }
+        ];
         
-        // Камера (следует за машиной)
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        document.body.appendChild(renderer.domElement);
-        
-        // Освещение
-        const ambientLight = new THREE.AmbientLight(0x404060);
-        scene.add(ambientLight);
-        
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        mainLight.position.set(5, 10, 7);
-        mainLight.castShadow = true;
-        mainLight.receiveShadow = true;
-        mainLight.shadow.mapSize.width = 1024;
-        mainLight.shadow.mapSize.height = 1024;
-        scene.add(mainLight);
-        
-        const fillLight = new THREE.PointLight(0x4466ff, 0.5);
-        fillLight.position.set(0, 5, 0);
-        scene.add(fillLight);
-        
-        const backLight = new THREE.PointLight(0xff6600, 0.3);
-        backLight.position.set(0, 2, -5);
-        scene.add(backLight);
-        
-        // Дорожное покрытие (бесконечное)
-        const roadLength = 400;
-        const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.4, metalness: 0.7 });
-        const road = new THREE.Mesh(new THREE.PlaneGeometry(12, roadLength), roadMaterial);
-        road.rotation.x = -Math.PI / 2;
-        road.position.y = -0.5;
-        road.position.z = -roadLength/2;
-        road.receiveShadow = true;
-        scene.add(road);
-        
-        // Разметка дороги (множество линий)
-        const lineMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0x442200 });
-        const lines = [];
-        for (let z = -roadLength/2; z <= roadLength/2; z += 2) {
-            const line = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.5), lineMaterial);
-            line.position.set(0, -0.4, z);
-            line.castShadow = true;
-            scene.add(line);
-            lines.push(line);
-        }
-        
-        // Бордюры
-        const curbMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3 });
-        const leftCurbs = [];
-        const rightCurbs = [];
-        for (let z = -roadLength/2; z <= roadLength/2; z += 1) {
-            const leftCurb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), curbMat);
-            leftCurb.position.set(-6, -0.3, z);
-            leftCurb.castShadow = true;
-            scene.add(leftCurb);
-            leftCurbs.push(leftCurb);
-            
-            const rightCurb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 1), curbMat);
-            rightCurb.position.set(6, -0.3, z);
-            rightCurb.castShadow = true;
-            scene.add(rightCurb);
-            rightCurbs.push(rightCurb);
-        }
-        
-        // Небо (купол)
-        const skyMaterial = new THREE.MeshStandardMaterial({ color: 0x0a1030, emissive: 0x0a1030 });
-        const skyDome = new THREE.Mesh(new THREE.SphereGeometry(200, 32, 32), skyMaterial);
-        skyDome.scale.set(1, 0.4, 1);
-        scene.add(skyDome);
-        
-        // Звёзды
-        const starGeometry = new THREE.BufferGeometry();
-        const starCount = 1500;
-        const starPositions = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            starPositions[i*3] = (Math.random() - 0.5) * 500;
-            starPositions[i*3+1] = (Math.random() - 0.5) * 100 + 20;
-            starPositions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
-        }
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
-        
-        // Машина игрока
-        const carGroup = new THREE.Group();
-        
-        const bodyGeo = new THREE.BoxGeometry(0.9, 0.4, 1.8);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff3333, metalness: 0.8, roughness: 0.2 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.2;
-        body.castShadow = true;
-        carGroup.add(body);
-        
-        const cabinGeo = new THREE.BoxGeometry(0.7, 0.3, 0.8);
-        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x33aaff, metalness: 0.9, roughness: 0.1 });
-        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-        cabin.position.set(0, 0.45, -0.2);
-        cabin.castShadow = true;
-        carGroup.add(cabin);
-        
-        const roofGeo = new THREE.BoxGeometry(0.75, 0.15, 0.85);
-        const roofMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7 });
-        const roof = new THREE.Mesh(roofGeo, roofMat);
-        roof.position.set(0, 0.65, -0.2);
-        roof.castShadow = true;
-        carGroup.add(roof);
-        
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.3, roughness: 0.5 });
-        const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.4, 24);
-        const wheelPositions = [[-0.6, 0.1, 0.7], [0.6, 0.1, 0.7], [-0.6, 0.1, -0.7], [0.6, 0.1, -0.7]];
-        wheelPositions.forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-            wheel.rotation.z = Math.PI / 2;
-            wheel.position.set(pos[0], pos[1], pos[2]);
-            wheel.castShadow = true;
-            carGroup.add(wheel);
-        });
-        
-        const lightMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4400 });
-        const leftLight = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), lightMat);
-        leftLight.position.set(-0.4, 0.2, 0.95);
-        const rightLight = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), lightMat);
-        rightLight.position.set(0.4, 0.2, 0.95);
-        carGroup.add(leftLight);
-        carGroup.add(rightLight);
-        
-        carGroup.position.y = 0;
-        carGroup.position.z = 0;
-        scene.add(carGroup);
-        
-        // Препятствия
-        let obstacles = [];
-        let score = 0;
-        let bestScore = localStorage.getItem('bestScore') || 0;
-        let gameActive = true;
-        let speed = 0;
-        let carX = 0;
-        
-        document.getElementById('bestScoreValue').innerText = bestScore;
-        
-        function updateHUD() {
-            document.getElementById('speedValue').innerText = Math.floor(Math.abs(speed) * 35);
-            document.getElementById('scoreValue').innerText = Math.floor(score);
-        }
-        
-        function createObstacle(x, z) {
-            const group = new THREE.Group();
-            
-            const bodyGeoB = new THREE.BoxGeometry(0.85, 0.4, 1.7);
-            const bodyMatB = new THREE.MeshStandardMaterial({ color: 0x44aa44, metalness: 0.5 });
-            const bodyB = new THREE.Mesh(bodyGeoB, bodyMatB);
-            bodyB.position.y = 0.2;
-            bodyB.castShadow = true;
-            group.add(bodyB);
-            
-            const cabinMatB = new THREE.MeshStandardMaterial({ color: 0x88ccff });
-            const cabinB = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.28, 0.75), cabinMatB);
-            cabinB.position.set(0, 0.45, -0.2);
-            cabinB.castShadow = true;
-            group.add(cabinB);
-            
-            const wheelMatB = new THREE.MeshStandardMaterial({ color: 0x222222 });
-            const wheelGeoB = new THREE.CylinderGeometry(0.28, 0.28, 0.35, 16);
-            const wheelPosB = [[-0.55, 0.1, 0.65], [0.55, 0.1, 0.65], [-0.55, 0.1, -0.65], [0.55, 0.1, -0.65]];
-            wheelPosB.forEach(pos => {
-                const wheel = new THREE.Mesh(wheelGeoB, wheelMatB);
-                wheel.rotation.z = Math.PI / 2;
-                wheel.position.set(pos[0], pos[1], pos[2]);
-                wheel.castShadow = true;
-                group.add(wheel);
+        platformList.forEach(p => {
+            platforms.push({ 
+                x: p.x, y: p.y, width: p.width, height: p.height, 
+                color: '#8B5A2B', borderColor: '#D2A679' 
             });
-            
-            group.position.set(x, 0, z);
-            scene.add(group);
-            return group;
-        }
-        
-        function spawnObstacle() {
-            const lane = (Math.random() - 0.5) * 5;
-            const zPos = -roadLength/2 - 5;
-            const obstacle = createObstacle(lane, zPos);
-            obstacles.push(obstacle);
-        }
-        
-        function checkCollision() {
-            for (let i = 0; i < obstacles.length; i++) {
-                const obs = obstacles[i];
-                const dx = carGroup.position.x - obs.position.x;
-                const dz = carGroup.position.z - obs.position.z;
-                const dist = Math.sqrt(dx * dx + dz * dz);
-                if (dist < 1.0 && gameActive) {
-                    gameActive = false;
-                    endGame();
-                }
-            }
-        }
-        
-        function endGame() {
-            const finalScore = Math.floor(score);
-            document.getElementById('finalScore').innerText = finalScore;
-            document.getElementById('bestScoreFinal').innerText = bestScore;
-            document.getElementById('gameOver').style.display = 'block';
-            
-            if (finalScore > bestScore) {
-                bestScore = finalScore;
-                localStorage.setItem('bestScore', bestScore);
-                document.getElementById('bestScoreValue').innerText = bestScore;
-            }
-        }
-        
-        function restartGame() {
-            obstacles.forEach(obs => scene.remove(obs));
-            obstacles = [];
-            score = 0;
-            speed = 0;
-            carX = 0;
-            carGroup.position.x = 0;
-            carGroup.position.z = 0;
-            gameActive = true;
-            updateHUD();
-            document.getElementById('gameOver').style.display = 'none';
-            
-            for (let i = 0; i < 6; i++) {
-                spawnObstacle();
-            }
-        }
-        
-        // Управление
-        const keys = { left: false, right: false };
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
         });
         
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+        // Монеты
+        const coinPositions = [
+            [220, 440], [370, 400], [520, 440], [700, 390], [820, 350],
+            [970, 410], [1120, 360], [1270, 430], [1420, 380], [1570, 330],
+            [1700, 400], [1880, 450], [2020, 370], [2170, 320], [2320, 390],
+            [2470, 340], [2630, 420], [2770, 360], [2920, 320]
+        ];
+        
+        coinPositions.forEach(pos => {
+            coins.push({ x: pos[0], y: pos[1], width: 12, height: 12, collected: false });
         });
         
-        document.getElementById('restartBtn').addEventListener('click', () => {
-            restartGame();
+        // Добавим дополнительные монеты на земле
+        for (let i = 300; i < GAME_WIDTH - 100; i += 150) {
+            if (Math.random() > 0.4) {
+                coins.push({ x: i, y: 495, width: 12, height: 12, collected: false });
+            }
+        }
+        
+        // Враги (двигающиеся)
+        const enemyPositions = [
+            { x: 400, y: 455, type: 'walker', direction: 1, range: 100 },
+            { x: 750, y: 405, type: 'walker', direction: -1, range: 100 },
+            { x: 1050, y: 425, type: 'walker', direction: 1, range: 80 },
+            { x: 1350, y: 445, type: 'walker', direction: -1, range: 120 },
+            { x: 1650, y: 345, type: 'walker', direction: 1, range: 90 },
+            { x: 1950, y: 465, type: 'walker', direction: -1, range: 100 },
+            { x: 2250, y: 335, type: 'walker', direction: 1, range: 80 },
+            { x: 2550, y: 435, type: 'walker', direction: -1, range: 100 }
+        ];
+        
+        enemyPositions.forEach(pos => {
+            enemies.push({
+                x: pos.x, y: pos.y, width: 28, height: 28,
+                type: pos.type,
+                direction: pos.direction,
+                startX: pos.x,
+                range: pos.range,
+                alive: true
+            });
         });
+    }
+    
+    // ============ РИСОВАНИЕ ============
+    function drawBackground() {
+        // Небо с градиентом
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#1a2a4a');
+        gradient.addColorStop(1, '#4a6a8a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Пыль
-        function createDust() {
-            const dustMat = new THREE.MeshStandardMaterial({ color: 0x888888, emissive: 0x442200 });
-            const dust = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), dustMat);
-            dust.position.set((Math.random() - 0.5) * 1.5, -0.2, -1.2);
-            carGroup.add(dust);
-            setTimeout(() => carGroup.remove(dust), 200);
+        // Облака
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        const cloudX = (cameraX * 0.3) % 400;
+        for (let i = -200; i < canvas.width + 200; i += 200) {
+            ctx.beginPath();
+            ctx.ellipse(cloudX + i, 70, 40, 30, 0, 0, Math.PI * 2);
+            ctx.ellipse(cloudX + i + 40, 60, 35, 28, 0, 0, Math.PI * 2);
+            ctx.ellipse(cloudX + i - 30, 65, 35, 28, 0, 0, Math.PI * 2);
+            ctx.fill();
         }
         
-        // Обновление камеры (следит за машиной)
-        function updateCamera() {
-            // Камера всегда позади машины на фиксированном расстоянии
-            const targetX = carGroup.position.x * 0.3;
-            camera.position.x += (targetX - camera.position.x) * 0.1;
-            camera.position.y = 3 + Math.abs(speed) * 0.3;
-            camera.position.z = carGroup.position.z + 5;
-            camera.lookAt(carGroup.position.x, 0, carGroup.position.z);
-        }
-        
-        // Анимация движения мира (препятствия и разметка движутся к игроку)
-        let worldOffset = 0;
-        
-        function animateWorld() {
-            if (!gameActive) return;
+        // Солнце
+        ctx.fillStyle = '#ffdd77';
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = '#ffaa33';
+        ctx.beginPath();
+        ctx.arc(canvas.width - 60, 60, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+    
+    function drawPlatforms() {
+        for (let p of platforms) {
+            // Тень платформы
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(p.x - cameraX, p.y + 3, p.width, p.height);
             
-            // Движение препятствий
-            for (let i = 0; i < obstacles.length; i++) {
-                obstacles[i].position.z += speed;
-                if (obstacles[i].position.z > roadLength/2 + 10) {
-                    scene.remove(obstacles[i]);
-                    obstacles.splice(i, 1);
-                    i--;
+            // Основная платформа
+            const grad = ctx.createLinearGradient(p.x - cameraX, p.y, p.x - cameraX, p.y + p.height);
+            grad.addColorStop(0, '#9B5A2B');
+            grad.addColorStop(1, '#6B3A1A');
+            ctx.fillStyle = grad;
+            ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
+            
+            // Детали платформы
+            ctx.fillStyle = '#D2A679';
+            ctx.fillRect(p.x - cameraX + 5, p.y - 3, p.width - 10, 5);
+            ctx.fillStyle = '#4a2a0a';
+            for (let i = 0; i < p.width; i += 20) {
+                ctx.fillRect(p.x - cameraX + i, p.y + 5, 8, 5);
+            }
+        }
+    }
+    
+    function drawPlayer() {
+        const x = player.x - cameraX;
+        const y = player.y;
+        
+        // Тень под игроком
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(x + 15, y + 32, 18, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Ноги (анимация при ходьбе)
+        const legOffset = player.vx !== 0 ? Math.sin(Date.now() * 0.015) * 5 : 0;
+        
+        ctx.fillStyle = '#2255aa';
+        ctx.fillRect(x + 5, y + 18, 8, 12);
+        ctx.fillRect(x + 17, y + 18, 8, 12);
+        
+        // Тело (комбинезон)
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(x + 5, y, 20, 28);
+        
+        // Грудь
+        ctx.fillStyle = '#ff6666';
+        ctx.fillRect(x + 8, y + 5, 14, 12);
+        
+        // Голова
+        ctx.fillStyle = '#ffcc99';
+        ctx.beginPath();
+        ctx.ellipse(x + 15, y - 5, 12, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Шляпа
+        ctx.fillStyle = '#cc3333';
+        ctx.fillRect(x + 3, y - 15, 24, 10);
+        ctx.fillRect(x + 8, y - 22, 14, 10);
+        
+        // Глаза
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x + 10, y - 7, 2, 0, Math.PI * 2);
+        ctx.arc(x + 20, y - 7, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(x + 9, y - 8, 0.8, 0, Math.PI * 2);
+        ctx.arc(x + 19, y - 8, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Усы
+        ctx.beginPath();
+        ctx.moveTo(x + 12, y - 3);
+        ctx.lineTo(x + 6, y - 1);
+        ctx.lineTo(x + 12, y);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + 18, y - 3);
+        ctx.lineTo(x + 24, y - 1);
+        ctx.lineTo(x + 18, y);
+        ctx.fill();
+        
+        // Направление взгляда
+        if (player.facingRight) {
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x + 22, y - 7, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    function drawCoins() {
+        for (let coin of coins) {
+            if (coin.collected) continue;
+            
+            const x = coin.x - cameraX;
+            const y = coin.y;
+            
+            // Анимация вращения монеты
+            const angle = Date.now() * 0.008;
+            const scale = 1 + Math.sin(angle * 3) * 0.1;
+            
+            ctx.save();
+            ctx.translate(x + 6, y + 6);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#ffd700';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffaa00';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 7, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffaa00';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 5, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText('★', -4, 4);
+            ctx.restore();
+        }
+        ctx.shadowBlur = 0;
+    }
+    
+    function drawEnemies() {
+        for (let enemy of enemies) {
+            if (!enemy.alive) continue;
+            
+            const x = enemy.x - cameraX;
+            const y = enemy.y;
+            
+            ctx.fillStyle = '#2a6a2a';
+            ctx.fillRect(x, y, enemy.width, enemy.height);
+            
+            ctx.fillStyle = '#3a9a3a';
+            ctx.fillRect(x + 4, y + 4, 20, 12);
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x + 5, y + 8, 5, 8);
+            ctx.fillRect(x + 18, y + 8, 5, 8);
+            
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(x + 14, y + 6, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x + 12, y + 5, 1.5, 0, Math.PI * 2);
+            ctx.arc(x + 16, y + 5, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Глаза-зрачки (следят за игроком)
+            const eyeX = (player.x - enemy.x) * 0.02;
+            const eyeY = (player.y - enemy.y) * 0.02;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x + 12 + Math.min(3, Math.max(-3, eyeX)), y + 5 + Math.min(2, Math.max(-2, eyeY)), 1, 0, Math.PI * 2);
+            ctx.arc(x + 16 + Math.min(3, Math.max(-3, eyeX)), y + 5 + Math.min(2, Math.max(-2, eyeY)), 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    function drawUI() {
+        document.getElementById('scoreValue').innerText = Math.floor(score);
+        document.getElementById('coinsValue').innerText = coinsCollected;
+    }
+    
+    // ============ ФИЗИКА И КОЛЛИЗИИ ============
+    function updatePlayer() {
+        // Горизонтальное движение
+        player.vx = 0;
+        if (keys.left) {
+            player.vx = -5;
+            player.facingRight = false;
+        }
+        if (keys.right) {
+            player.vx = 5;
+            player.facingRight = true;
+        }
+        
+        player.x += player.vx;
+        player.x = Math.max(20, Math.min(GAME_WIDTH - player.width - 20, player.x));
+        
+        // Гравитация
+        player.vy += GRAVITY;
+        player.y += player.vy;
+        
+        // Проверка столкновений с платформами
+        player.onGround = false;
+        for (let p of platforms) {
+            if (player.y + player.height > p.y && player.y < p.y + p.height &&
+                player.x + player.width > p.x && player.x < p.x + p.width) {
+                if (player.vy >= 0 && player.y + player.height - p.y <= 15) {
+                    player.y = p.y - player.height;
+                    player.vy = 0;
+                    player.onGround = true;
+                    canJump = true;
+                } else if (player.vy < 0) {
+                    player.y = p.y + p.height;
+                    player.vy = 0;
+                }
+            }
+        }
+        
+        // Падение в бездну
+        if (player.y > canvas.height + 100) {
+            gameRunning = false;
+        }
+        
+        // Прыжок
+        if (keys.jump && player.onGround && canJump) {
+            player.vy = JUMP_POWER;
+            player.onGround = false;
+            canJump = false;
+        }
+        
+        // Сброс флага прыжка
+        if (!keys.jump) {
+            jumpPressed = false;
+        }
+    }
+    
+    function updateCoins() {
+        for (let coin of coins) {
+            if (!coin.collected && 
+                player.x + player.width > coin.x &&
+                player.x < coin.x + coin.width &&
+                player.y + player.height > coin.y &&
+                player.y < coin.y + coin.height) {
+                coin.collected = true;
+                coinsCollected++;
+                score += 10;
+                drawUI();
+            }
+        }
+    }
+    
+    function updateEnemies() {
+        for (let enemy of enemies) {
+            if (!enemy.alive) continue;
+            
+            // Движение врага
+            if (enemy.type === 'walker') {
+                enemy.x += enemy.direction * 1.5;
+                if (enemy.x > enemy.startX + enemy.range) {
+                    enemy.x = enemy.startX + enemy.range;
+                    enemy.direction = -1;
+                }
+                if (enemy.x < enemy.startX - enemy.range) {
+                    enemy.x = enemy.startX - enemy.range;
+                    enemy.direction = 1;
                 }
             }
             
-            // Движение разметки (создаём эффект бесконечной дороги)
-            for (let line of lines) {
-                line.position.z += speed;
-                if (line.position.z > roadLength/2) {
-                    line.position.z = -roadLength/2;
+            // Проверка столкновения с игроком
+            if (player.x + player.width > enemy.x &&
+                player.x < enemy.x + enemy.width &&
+                player.y + player.height > enemy.y &&
+                player.y < enemy.y + enemy.height) {
+                
+                // Если игрок падает на врага сверху
+                if (player.vy > 0 && player.y + player.height - enemy.y <= 15) {
+                    enemy.alive = false;
+                    score += 50;
+                    player.vy = -7;
+                    drawUI();
+                } else {
+                    gameRunning = false;
                 }
             }
-            
-            for (let curb of leftCurbs) {
-                curb.position.z += speed;
-                if (curb.position.z > roadLength/2) {
-                    curb.position.z = -roadLength/2;
-                }
-            }
-            
-            for (let curb of rightCurbs) {
-                curb.position.z += speed;
-                if (curb.position.z > roadLength/2) {
-                    curb.position.z = -roadLength/2;
-                }
-            }
-            
-            // Спавн новых препятствий
-            if (Math.random() < 0.015 && obstacles.length < 8) {
-                spawnObstacle();
-            }
         }
-        
-        function animate() {
-            if (gameActive) {
-                // Управление
-                let turn = 0;
-                if (keys.left) turn = -1;
-                if (keys.right) turn = 1;
-                
-                // Ускорение
-                speed += 0.02;
-                speed = Math.min(speed, 2.5);
-                
-                // Поворот и движение машины
-                carX += turn * 0.08;
-                carX = Math.min(Math.max(carX, -4.5), 4.5);
-                carGroup.position.x = carX;
-                
-                // Вращение машины при повороте
-                carGroup.rotation.y = turn * 0.12;
-                carGroup.rotation.x = Math.sin(Date.now() * 0.015) * 0.02;
-                
-                // Дым при высокой скорости
-                if (speed > 1.5 && Math.random() > 0.8) createDust();
-                
-                // Обновление счёта
-                score += speed * 0.8;
-                updateHUD();
-                
-                // Движение мира относительно машины
-                animateWorld();
-                
-                // Проверка столкновений
-                checkCollision();
-                
-                // Обновление камеры (следит за машиной)
-                updateCamera();
-            }
-            
-            // Анимация света фар
-            const intensity = 0.5 + Math.random() * 0.3;
-            backLight.intensity = intensity;
-            
-            renderer.render(scene, camera);
-            requestAnimationFrame(animate);
+    }
+    
+    function updateCamera() {
+        // Камера следует за игроком
+        cameraX = player.x + player.width / 2 - canvas.width / 2;
+        cameraX = Math.max(0, Math.min(GAME_WIDTH - canvas.width, cameraX));
+    }
+    
+    // ============ УПРАВЛЕНИЕ ============
+    document.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase();
+        if (key === 'a' || key === 'arrowleft') keys.left = true;
+        if (key === 'd' || key === 'arrowright') keys.right = true;
+        if (key === ' ' || key === 'arrowup' || key === 'w') {
+            keys.jump = true;
+            e.preventDefault();
         }
-        
-        // Стартовые препятствия
-        for (let i = 0; i < 6; i++) {
-            spawnObstacle();
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        const key = e.key.toLowerCase();
+        if (key === 'a' || key === 'arrowleft') keys.left = false;
+        if (key === 'd' || key === 'arrowright') keys.right = false;
+        if (key === ' ' || key === 'arrowup' || key === 'w') {
+            keys.jump = false;
         }
+    });
+    
+    // Защита от прокрутки страницы при нажатии пробела
+    window.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+        }
+    });
+    
+    // ============ ПЕРЕЗАПУСК ============
+    function restartGame() {
+        // Сброс переменных
+        player = {
+            x: 100, y: 450, vx: 0, vy: 0, width: 30, height: 35,
+            onGround: true, facingRight: true
+        };
+        platforms = [];
+        coins = [];
+        enemies = [];
+        score = 0;
+        coinsCollected = 0;
+        gameRunning = true;
+        cameraX = 0;
         
-        // Начальная позиция камеры
-        camera.position.set(0, 3, 5);
-        camera.lookAt(0, 0, 0);
+        createLevel();
+        drawUI();
+        document.getElementById('gameOver').style.display = 'none';
         
+        // Перезапуск анимации
+        if (animFrame) cancelAnimationFrame(animFrame);
         animate();
+    }
+    
+    document.getElementById('restartBtn').addEventListener('click', () => {
+        restartGame();
+    });
+    
+    // ============ ОСНОВНАЯ АНИМАЦИЯ ============
+    function animate() {
+        if (!gameRunning) {
+            document.getElementById('finalScore').innerText = Math.floor(score);
+            document.getElementById('finalCoins').innerText = coinsCollected;
+            document.getElementById('gameOver').style.display = 'block';
+            return;
+        }
         
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+        updatePlayer();
+        updateCoins();
+        updateEnemies();
+        updateCamera();
+        drawUI();
+        
+        // Отрисовка
+        drawBackground();
+        drawPlatforms();
+        drawEnemies();
+        drawCoins();
+        drawPlayer();
+        
+        animFrame = requestAnimationFrame(animate);
+    }
+    
+    // Создание уровня и запуск
+    createLevel();
+    drawUI();
+    animate();
+</script>
 </body>
 </html>
