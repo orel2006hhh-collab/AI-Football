@@ -1,8 +1,6 @@
 name: Update Football Predictions
 
 on:
-  schedule:
-    - cron: '0 10 * * *'
   workflow_dispatch:
   push:
 
@@ -23,16 +21,31 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install pandas numpy requests python-dotenv
+          pip install pandas numpy
 
-      - name: Create test file
-        run: echo "Test update" > update.txt
+      - name: Create Python test
+        run: |
+          python -c "
+import pandas as pd
+import numpy as np
+print('Pandas version:', pd.__version__)
+print('NumPy version:', np.__version__)
+print('Python works!')
+"
 
-      - name: Commit and push
+      - name: Create data file
+        run: |
+          python -c "
+import json
+data = {'status': 'ok', 'timestamp': '2025-01-01'}
+with open('data.json', 'w') as f:
+    json.dump(data, f)
+"
+
+      - name: Commit files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add update.txt
-          git diff --cached --quiet || git commit -m "Auto-update test"
+          git add data.json
+          git diff --cached --quiet || git commit -m "Add data file"
           git push
