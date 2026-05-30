@@ -1,0 +1,59 @@
+name: Update Football Predictions
+
+on:
+  schedule:
+    # Запуск каждый день в 10:00 UTC (13:00 по Москве)
+    - cron: '0 10 * * *'
+  # А еще можно запустить вручную кнопкой
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run data update script
+        env:
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+        run: |
+          python -c "
+from data_fetcher import DataFetcher
+from database import Database
+db = Database()
+fetcher = DataFetcher()
+matches = fetcher.fetch_upcoming_matches()
+print(f'Found {len(matches)} matches')
+db.save_matches(matches)
+"
+      
+      - name: Run predictions
+        run: |
+          python -c "
+from prediction_model import PoissonPredictionModel
+from database import Database
+db = Database()
+model = PoissonPredictionModel()
+matches = db.get_upcoming_matches()
+print(f'Making predictions for {len(matches)} matches')
+"
+      
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add football_predictions.db
+          git diff --cached --quiet || git commit -m "Auto-update: refresh predictions [skip ci]"
+          git push
