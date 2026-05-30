@@ -23,24 +23,8 @@ jobs:
         run: |
           pip install pandas numpy
 
-      - name: Create Python test
-        run: |
-          python -c "
-import pandas as pd
-import numpy as np
-print('Pandas version:', pd.__version__)
-print('NumPy version:', np.__version__)
-print('Python works!')
-"
-
-      - name: Create data file
-        run: |
-          python -c "
-import json
-data = {'status': 'ok', 'timestamp': '2025-01-01'}
-with open('data.json', 'w') as f:
-    json.dump(data, f)
-"
+      - name: Run Python script
+        run: python test.py
 
       - name: Commit files
         run: |
