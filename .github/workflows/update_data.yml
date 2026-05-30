@@ -2,9 +2,13 @@ name: Update Football Predictions
 
 on:
   schedule:
-    - cron: '0 10 * * *'
-  workflow_dispatch:
-  push:
+    - cron: '0 10 * * *'  # Запуск каждый день в 10:00 UTC
+  workflow_dispatch:      # Возможность запуска вручную
+  push:                   # Временный триггер для отладки
+
+# ЭТО ВАЖНО: Явно даем права на запись в репозиторий
+permissions:
+  contents: write
 
 jobs:
   update-data:
@@ -24,19 +28,30 @@ jobs:
           pip install --upgrade pip
           pip install streamlit pandas numpy requests plotly python-dotenv schedule scipy
       
-      - name: Create database
-        run: python -c "from database import Database; db = Database()"
+      # Создаем фиктивный файл, чтобы был смысл для коммита
+      - name: Create empty database if not exists
+        run: python -c "from database import Database; db = Database(); print('Database initialized')"
       
-      - name: Fetch matches
+      # Этот шаг будет обновлять данные, когда API заработают
+      - name: Fetch matches (demo)
         env:
           FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
           THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
-        run: python -c "from data_fetcher import DataFetcher; from database import Database; fetcher = DataFetcher(); matches = fetcher.fetch_upcoming_matches(); print(f'Found {len(matches)} matches')"
-      
-      - name: Update git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Fetching matches would go here"
+          date > last_run.txt
+      
+      # Шаг для коммита и пуша
+      - name: Commit and push updates
+        # ЭТО ВАЖНО: Настройка пользователя для коммита
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet || git commit -m "Auto-update predictions"
-          git push
+          # Делаем коммит, только если есть изменения
+          if ! git diff --cached --quiet; then
+            git commit -m "Automated data update [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi
