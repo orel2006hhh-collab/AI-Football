@@ -5,7 +5,6 @@ on:
     - cron: '0 10 * * *'
   workflow_dispatch:
   push:
-    branches: [ main ]
 
 jobs:
   update-data:
@@ -25,26 +24,19 @@ jobs:
           pip install --upgrade pip
           pip install streamlit pandas numpy requests plotly python-dotenv schedule scipy
       
-      - name: Initialize database
-        run: python -c "from database import Database; db = Database(); print('Database OK')"
+      - name: Create database
+        run: python -c "from database import Database; db = Database()"
       
-      - name: Fetch and update data
+      - name: Fetch matches
         env:
           FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
           THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
-        run: python -c "
-from data_fetcher import DataFetcher
-from database import Database
-db = Database()
-fetcher = DataFetcher()
-matches = fetcher.fetch_upcoming_matches()
-print(f'Found {len(matches)} matches')
-"
+        run: python -c "from data_fetcher import DataFetcher; from database import Database; fetcher = DataFetcher(); matches = fetcher.fetch_upcoming_matches(); print(f'Found {len(matches)} matches')"
       
-      - name: Commit updates
+      - name: Update git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet || git commit -m "Auto-update predictions [skip ci]"
+          git diff --cached --quiet || git commit -m "Auto-update predictions"
           git push
