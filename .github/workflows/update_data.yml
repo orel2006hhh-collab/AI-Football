@@ -2,56 +2,37 @@ name: Update Football Predictions
 
 on:
   schedule:
-    - cron: '0 10 * * *'  # Запуск каждый день в 10:00 UTC
-  workflow_dispatch:      # Возможность запуска вручную
-  push:                   # Временный триггер для отладки
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+  push:
 
-# ЭТО ВАЖНО: Явно даем права на запись в репозиторий
 permissions:
   contents: write
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install streamlit pandas numpy requests plotly python-dotenv schedule scipy
-      
-      # Создаем фиктивный файл, чтобы был смысл для коммита
-      - name: Create empty database if not exists
-        run: python -c "from database import Database; db = Database(); print('Database initialized')"
-      
-      # Этот шаг будет обновлять данные, когда API заработают
-      - name: Fetch matches (demo)
-        env:
-          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
-          THE_ODDS_API_KEY: ${{ secrets.THE_ODDS_API_KEY }}
+          pip install pandas numpy requests python-dotenv
+
+      - name: Create test file
+        run: echo "Test update" > update.txt
+
+      - name: Commit and push
         run: |
-          echo "Fetching matches would go here"
-          date > last_run.txt
-      
-      # Шаг для коммита и пуша
-      - name: Commit and push updates
-        # ЭТО ВАЖНО: Настройка пользователя для коммита
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          # Делаем коммит, только если есть изменения
-          if ! git diff --cached --quiet; then
-            git commit -m "Automated data update [skip ci]"
-            git push
-          else
-            echo "No changes to commit"
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.txt
+          git diff --cached --quiet || git commit -m "Auto-update test"
+          git push
